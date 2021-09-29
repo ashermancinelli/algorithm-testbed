@@ -9,6 +9,8 @@ find_package(Threads REQUIRED)
 find_package(RAJA REQUIRED)
 find_package(umpire REQUIRED)
 
+list(APPEND CMAKE_CUDA_FLAGS "--extended-lambda")
+
 add_library(tpl INTERFACE)
 target_link_libraries(tpl INTERFACE RAJA umpire Threads::Threads)
 
