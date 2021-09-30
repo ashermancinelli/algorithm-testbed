@@ -5,13 +5,18 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 project(bqn-raja-ex CXX)
 
-option(ENABLE_CUDA ON)
+set(HAS_CUDA OFF)
 
 find_package(Threads REQUIRED)
 find_package(RAJA REQUIRED)
 find_package(umpire REQUIRED)
 
-list(APPEND CMAKE_CUDA_FLAGS "--extended-lambda")
+if(TARGET RAJA::cuda)
+  message(STATUS "Found CUDA")
+  set(HAS_CUDA ON)
+  enable_language(CUDA)
+  list(APPEND CMAKE_CUDA_FLAGS "--extended-lambda")
+endif()
 
 add_library(tpl INTERFACE)
 target_link_libraries(tpl INTERFACE RAJA umpire Threads::Threads)

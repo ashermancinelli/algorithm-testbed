@@ -1,48 +1,92 @@
 #include <iostream>
+#include <string>
+#include <tuple>
+#include <vector>
 
 #include <RAJA/RAJA.hpp>
 #include <umpire/Allocator.hpp>
 #include <umpire/ResourceManager.hpp>
 
+using std::tuple;
+using std::vector;
+using std::string;
+
 using RAJA::forall;
+using RAJA::inclusive_scan_inplace;
 using RAJA::RangeSegment;
 
 #ifdef RAJA_CUDA_ACTIVE
-  using exec_space = RAJA::cuda_exec<128>;
-  #define LAMBDA [=]__device__
-  static const char mem_space[] = "UM";
+using exec_space = RAJA::cuda_exec<128>;
+using reduce_pol = RAJA::cuda_reduce;
+#define LAMBDA [=] __device__
+static const char mem_space[] = "UM";
 #else
-  using exec_space = RAJA::seq_exec;
-  #define LAMBDA [=]
-  static const char mem_space[] = "HOST";
+using exec_space = RAJA::seq_exec;
+using reduce_pol = RAJA::seq_reduce;
+#define LAMBDA [=]
+static const char mem_space[] = "HOST";
 #endif
 
 // BQN solution:
 // {+´0=+`1-˜2×82=@-˜𝕩}
 int main(int argc, char **argv) {
 
-  static constexpr std::size_t N = 100;
-
   auto &rm = umpire::ResourceManager::getInstance();
   umpire::Allocator alloc = rm.getAllocator(mem_space);
+  vector<tuple<string, int>> testcases{
+      {
+          {"LLRRLRLRLR"},
+          4,
+      },
+      {
+          {"RLLLLRRRLR"},
+          3,
+      },
+      {
+          {"LLLLRRRR"},
+          1,
+      },
+      {
+          {"RLRRRLLRLL"},
+          2,
+      },
+  };
 
-  auto *arr = static_cast<int*>(alloc.allocate(N * sizeof(int)));
-  std::string hostarr{"LLRRLRLRLR"};
-
-  // Fill the device array with the values from the input problem, and backpad
-  // with the null character
-  for (int i=0; i < N; i++) {
-    arr[i] = i < N ? hostarr[i] : '\0';
-  }
+  // allocate a workspace array larger than the largest test case
+  auto *arr = static_cast<int *>(alloc.allocate(1e3 * sizeof(int)));
 
   std::cout << "Running balanced substring solution\n";
-  forall<exec_space>(
-      RangeSegment(0, N), LAMBDA(const int i) { arr[i] = 1.; });
 
-  std::cout << "Results:\n";
-  for (int i=0; i<N; i++)
-    std::cout << arr[i] << " ";
-  std::cout << "\n";
+  for (const auto &[testcase, solution] : testcases) {
+
+    std::cout << "Testcase: " << testcase << "\n";
+    const auto &N = testcase.size();
+
+    // Fill the device array with the values from the input problem, and backpad
+    // with the null character. We're using UVM if cuda/hip are enabled, so
+    // we don't need an explicit memcpy
+    for (int i = 0; i < N; i++) {
+      arr[i] = testcase[i];
+    }
+
+    // Apply the transform to -1s and 1s
+    forall<exec_space>(
+        RangeSegment(0, testcase.size()),
+        LAMBDA(const int i) { arr[i] = (arr[i] == 'L') ? 1 : -1; });
+
+    // Perform the prefix sum. Default operation is RAJA::operators::plus which
+    // is what we want. This is the same as +´
+    inclusive_scan_inplace<exec_space>(RAJA::make_span(arr, N));
+
+    // Sum the 0s
+    RAJA::ReduceSum<reduce_pol, int> sum0s(0);
+    forall<exec_space>(
+        RangeSegment(0, testcase.size()),
+        LAMBDA(const int i) { sum0s += static_cast<int>(arr[i] == 0); });
+
+    std::cout << "\tResults: " << sum0s.get() << "\n\tExpected: " << solution
+              << "\n";
+  }
 
   alloc.deallocate(arr);
   return 0;
