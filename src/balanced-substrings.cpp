@@ -70,15 +70,18 @@ int main(int argc, char **argv) {
     }
 
     // Apply the transform to -1s and 1s
+    // bqn) {1-˜2×82=@-˜𝕩}
     forall<exec_space>(
         RangeSegment(0, N),
-        LAMBDA(const int i) { arr[i] = (arr[i] == 'L') ? 1 : -1; });
+        LAMBDA(const int i) { arr[i] = (arr[i] == 'R') ? 1 : -1; });
 
     // Perform the prefix sum. Default operation is RAJA::operators::plus which
     // is what we want. This is the same as +´
+    // bqn) {+´𝕩}
     inclusive_scan_inplace<exec_space>(RAJA::make_span(arr, N));
 
     // Sum the 0s
+    // bqn) {+`0=𝕩}
     RAJA::ReduceSum<reduce_pol, int> sum0s(0);
     forall<exec_space>(
         RangeSegment(0, N),

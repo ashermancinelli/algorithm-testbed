@@ -22,4 +22,12 @@ $ cmake ..
 $ make
 ```
 
-From here, the drivers should be available under `./src`.
+From here, the drivers should be available under `build/src`.
+
+## Why are array languages important to GPU programming?
+
+* Array languages force you to think in terms of *operators* on *collections*
+  instead of *operations* on *scalars*.
+* GPU programming requires the same. You are not able to think in terms of
+  sequential loops if you want to gain any performance.
+* Leverage well-understood primitives
