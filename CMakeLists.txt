@@ -3,7 +3,9 @@ cmake_minimum_required (VERSION 3.18)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-project(bqn-raja-ex CXX CUDA)
+project(bqn-raja-ex CXX)
+
+option(ENABLE_CUDA ON)
 
 find_package(Threads REQUIRED)
 find_package(RAJA REQUIRED)
