@@ -7,9 +7,9 @@
 #include <umpire/Allocator.hpp>
 #include <umpire/ResourceManager.hpp>
 
+using std::string;
 using std::tuple;
 using std::vector;
-using std::string;
 
 using RAJA::forall;
 using RAJA::inclusive_scan_inplace;
@@ -27,12 +27,15 @@ using reduce_pol = RAJA::seq_reduce;
 static const char mem_space[] = "HOST";
 #endif
 
-// BQN solution:
-// {+´0=+`1-˜2×82=@-˜𝕩}
+// bqn solution:
+//
+// {+´0=+`1-˜2×82=@-˜𝕩} ¨ "LLRRLRLRLR"‿"RLLLLRRRLR"‿"LLLLRRRR"‿"RLRRRLLRLL"
+
 int main(int argc, char **argv) {
 
   auto &rm = umpire::ResourceManager::getInstance();
   umpire::Allocator alloc = rm.getAllocator(mem_space);
+  vector<int> answers;
   vector<tuple<string, int>> testcases{
       {
           {"LLRRLRLRLR"},
@@ -55,11 +58,8 @@ int main(int argc, char **argv) {
   // allocate a workspace array larger than the largest test case
   auto *arr = static_cast<int *>(alloc.allocate(1e3 * sizeof(int)));
 
-  std::cout << "Running balanced substring solution\n";
-
   for (const auto &[testcase, solution] : testcases) {
 
-    std::cout << "Testcase: " << testcase << "\n";
     const auto &N = testcase.size();
 
     // Fill the device array with the values from the input problem, and backpad
@@ -71,7 +71,7 @@ int main(int argc, char **argv) {
 
     // Apply the transform to -1s and 1s
     forall<exec_space>(
-        RangeSegment(0, testcase.size()),
+        RangeSegment(0, N),
         LAMBDA(const int i) { arr[i] = (arr[i] == 'L') ? 1 : -1; });
 
     // Perform the prefix sum. Default operation is RAJA::operators::plus which
@@ -81,12 +81,17 @@ int main(int argc, char **argv) {
     // Sum the 0s
     RAJA::ReduceSum<reduce_pol, int> sum0s(0);
     forall<exec_space>(
-        RangeSegment(0, testcase.size()),
+        RangeSegment(0, N),
         LAMBDA(const int i) { sum0s += static_cast<int>(arr[i] == 0); });
 
-    std::cout << "\tResults: " << sum0s.get() << "\n\tExpected: " << solution
-              << "\n";
+    answers.push_back(sum0s.get());
   }
+
+  std::cout << "⟨ ";
+  std::copy(
+      answers.begin(), answers.end(),
+      std::ostream_iterator<int>(std::cout, " "));
+  std::cout << "⟩\n";
 
   alloc.deallocate(arr);
   return 0;
