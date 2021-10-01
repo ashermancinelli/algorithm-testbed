@@ -3,34 +3,15 @@
 #include <tuple>
 #include <vector>
 
-#include <RAJA/RAJA.hpp>
-#include <umpire/Allocator.hpp>
-#include <umpire/ResourceManager.hpp>
+#include "config.hpp"
 
 using std::string;
 using std::tuple;
 using std::vector;
 
-using RAJA::forall;
-using RAJA::inclusive_scan_inplace;
-using RAJA::RangeSegment;
-
-#ifdef RAJA_CUDA_ACTIVE
-using exec_space = RAJA::cuda_exec<128>;
-using reduce_pol = RAJA::cuda_reduce;
-#define LAMBDA [=] __device__
-static const char mem_space[] = "UM";
-#else
-using exec_space = RAJA::seq_exec;
-using reduce_pol = RAJA::seq_reduce;
-#define LAMBDA [=]
-static const char mem_space[] = "HOST";
-#endif
-
 // bqn solution:
 //
 // {+´0=+`1-˜2×82=@-˜𝕩} ¨ "LLRRLRLRLR"‿"RLLLLRRRLR"‿"LLLLRRRR"‿"RLRRRLLRLL"
-
 int main(int argc, char **argv) {
 
   auto &rm = umpire::ResourceManager::getInstance();

@@ -1,21 +1,5 @@
 #include <iostream>
-
-#include <RAJA/RAJA.hpp>
-#include <umpire/Allocator.hpp>
-#include <umpire/ResourceManager.hpp>
-
-using RAJA::forall;
-using RAJA::RangeSegment;
-
-#ifdef RAJA_CUDA_ACTIVE
-  using exec_space = RAJA::cuda_exec<128>;
-  #define LAMBDA [=]__device__
-  static constexpr char mem_space[] = "UM";
-#else
-  using exec_space = RAJA::seq_exec;
-  #define LAMBDA [=]
-  static constexpr char mem_space[] = "HOST";
-#endif
+#include "config.hpp"
 
 int main(int, char **) {
 

@@ -10,6 +10,7 @@ set(HAS_CUDA OFF)
 find_package(Threads REQUIRED)
 find_package(RAJA REQUIRED)
 find_package(umpire REQUIRED)
+find_package(range-v3 REQUIRED)
 
 if(TARGET RAJA::cuda)
   message(STATUS "Found CUDA")
@@ -19,6 +20,12 @@ if(TARGET RAJA::cuda)
 endif()
 
 add_library(tpl INTERFACE)
-target_link_libraries(tpl INTERFACE RAJA umpire Threads::Threads)
+target_link_libraries(tpl
+  INTERFACE
+  RAJA
+  umpire
+  Threads::Threads
+  range-v3
+  )
 
 add_subdirectory(src)
