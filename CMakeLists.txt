@@ -5,27 +5,59 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 project(bqn-raja-ex CXX)
 
-set(HAS_CUDA OFF)
+message(STATUS "Enabling tests globally")
+enable_testing()
 
-find_package(Threads REQUIRED)
+include_directories(include)
+
+set(HAS_RAJA OFF)
+set(HAS_RAJA_CUDA OFF)
 find_package(RAJA REQUIRED)
-find_package(umpire REQUIRED)
-find_package(range-v3 REQUIRED)
+if(TARGET RAJA)
+  message(STATUS "Found RAJA")
+  set(HAS_RAJA ON)
+  find_package(Threads REQUIRED)
+  find_package(umpire REQUIRED)
+  if(TARGET RAJA::cuda)
+    set(HAS_RAJA_CUDA ON)
+    message(STATUS "Found CUDA targets for RAJA")
+    enable_language(CUDA)
+    list(APPEND CMAKE_CUDA_FLAGS "--extended-lambda")
+  else()
+    message(STATUS "Could not find CUDA targets for RAJA")
+  endif()
 
-if(TARGET RAJA::cuda)
-  message(STATUS "Found CUDA")
-  set(HAS_CUDA ON)
-  enable_language(CUDA)
-  list(APPEND CMAKE_CUDA_FLAGS "--extended-lambda")
+  add_library(raja-tpl INTERFACE)
+  target_link_libraries(raja-tpl
+    INTERFACE
+    RAJA
+    umpire
+    Threads::Threads
+    )
 endif()
 
-add_library(tpl INTERFACE)
-target_link_libraries(tpl
-  INTERFACE
-  RAJA
-  umpire
-  Threads::Threads
-  range-v3
-  )
+set(HAS_KOKKOS OFF)
+find_package(Kokkos)
+if(TARGET Kokkos::kokkos)
+  set(HAS_KOKKOS ON)
+  message(STATUS "Found Kokkos")
+  add_library(kokkos-tpl INTERFACE)
+  target_link_libraries(kokkos-tpl
+    INTERFACE
+    Kokkos::kokkos
+    )
+endif()
+
+set(HAS_HOST OFF)
+find_package(range-v3)
+if(TARGET range-v3)
+  set(HAS_HOST ON)
+  add_library(host-tpl INTERFACE)
+  target_link_libraries(host-tpl
+    INTERFACE
+    Threads::Threads
+    ranges-v3
+    )
+endif()
 
 add_subdirectory(src)

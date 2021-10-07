@@ -3,7 +3,7 @@
 #include <tuple>
 #include <vector>
 
-#include "config.hpp"
+#include "raja-config.hpp"
 
 using std::string;
 using std::tuple;
