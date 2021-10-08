@@ -6,8 +6,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [v0.1.2] - 10.8.2021
+
+### Added
+
+- Documentation about the purpose of the repo
+
 ### Changed
 
+- Name of repo to "portable-algorithm-testbed"
 - Common header layout
 - Correctly handle packages not being found
 - Fix host kokkos code
