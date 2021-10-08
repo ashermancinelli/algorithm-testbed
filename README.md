@@ -1,6 +1,7 @@
 ## Portable Algorithm Testbed
 
 GPU-portable implementations of programming problems.
+[See the `doc` directory for more.](./doc/README.md)
 
 ## Installation
 
