@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Common header layout
+- Correctly handle packages not being found
+- Fix host kokkos code
 
 ## [v0.1.1] - 10-7-2021
 
