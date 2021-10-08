@@ -1,9 +1,5 @@
 #include "raja-config.hpp"
 
-using std::string;
-using std::tuple;
-using std::vector;
-
 #if 0
 answers ⇐ 3‿2‿1
 input ⇐ ⟨⟨1, 2, 0⟩, ⟨3, 4, -1, 1⟩, ⟨7, 8, 9, 11, 12⟩⟩

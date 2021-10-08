@@ -12,21 +12,30 @@ using real_view = View<int *, Device>;
  *
  */
 
-struct Answer {
-  std::vector<int> totals;
-  std::vector<std::string> histogram;
-};
+using Answer = vector<pair<int>>;
 
-int main(int, char **) {
+static void print_answer(const Answer &a) {
+  for(const auto& [value, histogram] : a)
+    std::cout << value << " ";
+    for (int i = 0; i < histogram; i++)
+      std::cout << "*";
+    std::cout << "\n";
+  }
+}
+
+int main(int argc, char **argv) {
+  Kokkos::initialize(argc, argv);
+
   std::vector<std::vector<int>> problems{
       {4, 3, 7},
       {6},
       {5, 3, 4},
   };
+  std::vector<Answer> answers;
 
-  Kokkos::initialize();
   {
     for (const auto &problem : problems) {
+
       std::cout << "Generating histogram for dice with sides: ";
       print_container(problem);
 
@@ -36,8 +45,29 @@ int main(int, char **) {
       for (int i = 0; i < problem.size(); i++)
         host_mirror(i) = problem[i];
       deep_copy(dice, host_mirror);
+
+      auto num_bins = std::accumulate(problem.begin(), problem.end(), 1,
+                                      std::multiplies<int>());
+
+      int_view bins("bins", num_bins);
+
+      switch (problem.size()) {
+      case 1:
+        // All values are 1
+        Answer a;
+        for(int i=0; i<problem[0]; i++)
+          answers.push_back({i, 1});
+        break;
+      case 2:
+      default:
+        throw std::runtime_error("Got unsupported problem rank");
+      }
+
+      parallel_for(
+          num_bins, KOKKOS_LAMBDA(const int i) { dice(0) = 1; });
     }
   }
+
   Kokkos::finalize();
   return 0;
 }

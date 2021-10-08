@@ -1,4 +1,5 @@
 #pragma once
+#include "common-config.hpp"
 
 #include <RAJA/RAJA.hpp>
 #include <umpire/Allocator.hpp>
@@ -19,5 +20,3 @@ using reduce_pol = RAJA::seq_reduce;
 #define LAMBDA [=]
 static const char mem_space[] = "HOST";
 #endif
-
-#include "common-config.hpp"

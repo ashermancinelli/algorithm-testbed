@@ -1,4 +1,25 @@
+// vi: ft=cpp
 #pragma once
+
+#cmakedefine HAS_RAJA
+#cmakedefine HAS_RAJA_CUDA
+
+#cmakedefine HAS_KOKKOS
+#cmakedefine HAS_KOKKOS_CUDA
+
+#cmakedefine HAS_HOST
+
+#ifdef HAS_RAJA_CUDA
+#define RAJA_LAMBDA [=] __device__
+#else
+#define RAJA_LAMBDA [=]
+#endif
+
+#ifdef HAS_KOKKOS_CUDA
+#define KOKKOS_LAMBDA [=] __device__
+#else
+#define KOKKOS_LAMBDA [=]
+#endif
 
 #include <vector>
 #include <string>
@@ -9,6 +30,11 @@
 #include <iostream>
 #include <tuple>
 #include <limits>
+
+using std::string;
+using std::tuple;
+using std::vector;
+using std::pair;
 
 template<typename Container>
 auto print_container(Container& c) {

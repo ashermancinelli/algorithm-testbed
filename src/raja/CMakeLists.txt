@@ -18,5 +18,5 @@ foreach(SRC ${EXAMPLES})
   endif()
 
   install(TARGETS ${SRC} RUNTIME DESTINATION bin)
-  add_test(NAME "TEST_${SRC}" COMMAND $<TARGET_FILE:${SRC}>)
+  add_test(NAME "test-${SRC}" COMMAND $<TARGET_FILE:${SRC}>)
 endforeach()

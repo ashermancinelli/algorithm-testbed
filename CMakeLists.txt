@@ -9,6 +9,7 @@ message(STATUS "Enabling tests globally")
 enable_testing()
 
 include_directories(include)
+include_directories(${PROJECT_BINARY_DIR}/include)
 
 set(HAS_RAJA OFF)
 set(HAS_RAJA_CUDA OFF)
@@ -37,10 +38,15 @@ if(TARGET RAJA)
 endif()
 
 set(HAS_KOKKOS OFF)
+set(HAS_KOKKOS_CUDA OFF)
 find_package(Kokkos)
 if(TARGET Kokkos::kokkos)
   set(HAS_KOKKOS ON)
   message(STATUS "Found Kokkos")
+  if(TARGET Kokkos::CUDA)
+    set(HAS_KOKKOS_CUDA ON)
+    message(STATUS "Found Kokkos CUDA")
+  endif()
   add_library(kokkos-tpl INTERFACE)
   target_link_libraries(kokkos-tpl
     INTERFACE
@@ -59,5 +65,16 @@ if(TARGET range-v3)
     ranges-v3
     )
 endif()
+
+configure_file(
+  include/common-config.hpp.in
+  ${PROJECT_BINARY_DIR}/include/common-config.hpp
+  )
+install(
+  FILES
+  ${PROJECT_BINARY_DIR}/include/common-config.hpp
+  DESTINATION
+  include
+  )
 
 add_subdirectory(src)
