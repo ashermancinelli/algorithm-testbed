@@ -13,7 +13,7 @@ include_directories(${PROJECT_BINARY_DIR}/include)
 
 set(HAS_RAJA OFF)
 set(HAS_RAJA_CUDA OFF)
-find_package(RAJA REQUIRED)
+find_package(RAJA QUIET)
 if(TARGET RAJA)
   message(STATUS "Found RAJA")
   set(HAS_RAJA ON)
@@ -35,11 +35,14 @@ if(TARGET RAJA)
     umpire
     Threads::Threads
     )
+else()
+  message(STATUS "Could not find RAJA. "
+    "RAJA examples will not be built.")
 endif()
 
 set(HAS_KOKKOS OFF)
 set(HAS_KOKKOS_CUDA OFF)
-find_package(Kokkos)
+find_package(Kokkos QUIET)
 if(TARGET Kokkos::kokkos)
   set(HAS_KOKKOS ON)
   message(STATUS "Found Kokkos")
@@ -52,10 +55,13 @@ if(TARGET Kokkos::kokkos)
     INTERFACE
     Kokkos::kokkos
     )
+else()
+  message(STATUS "Could not find Kokkos. "
+    "Kokkos examples will not be built.")
 endif()
 
 set(HAS_HOST OFF)
-find_package(range-v3)
+find_package(range-v3 QUIET)
 if(TARGET range-v3)
   set(HAS_HOST ON)
   add_library(host-tpl INTERFACE)
@@ -64,6 +70,9 @@ if(TARGET range-v3)
     Threads::Threads
     ranges-v3
     )
+else()
+  message(STATUS "Could not find range-v3 library. "
+    "Host examples will not be built.")
 endif()
 
 configure_file(

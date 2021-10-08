@@ -12,25 +12,27 @@ using real_view = View<int *, Device>;
  *
  */
 
-using Answer = vector<pair<int>>;
+using Answer = vector<pair<int, int>>;
 
 static void print_answer(const Answer &a) {
-  for(const auto& [value, histogram] : a)
+  for (const auto &[value, histogram] : a) {
     std::cout << value << " ";
     for (int i = 0; i < histogram; i++)
       std::cout << "*";
     std::cout << "\n";
   }
+  std::cout << "\n";
 }
 
 int main(int argc, char **argv) {
   Kokkos::initialize(argc, argv);
 
-  std::vector<std::vector<int>> problems{
+  vector<vector<int>> problems{
       {4, 3, 7},
       {6},
       {5, 3, 4},
   };
+
   std::vector<Answer> answers;
 
   {
@@ -51,22 +53,22 @@ int main(int argc, char **argv) {
 
       int_view bins("bins", num_bins);
 
-      switch (problem.size()) {
-      case 1:
-        // All values are 1
+      if (1 == problem.size()) {
         Answer a;
-        for(int i=0; i<problem[0]; i++)
-          answers.push_back({i, 1});
-        break;
-      case 2:
-      default:
-        throw std::runtime_error("Got unsupported problem rank");
+        // All values are 1
+        for (int i = 1; i <= problem[0]; i++)
+          a.push_back(pair<int, int>{i, 1});
+        answers.push_back(a);
+        continue;
       }
 
-      parallel_for(
-          num_bins, KOKKOS_LAMBDA(const int i) { dice(0) = 1; });
+      // parallel_for(
+      //     num_bins, KOKKOS_LAMBDA(const int i) { });
     }
   }
+
+  for (const auto& ans : answers)
+    print_answer(ans);
 
   Kokkos::finalize();
   return 0;

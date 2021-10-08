@@ -1,6 +1,6 @@
 
-message(STATUS "Host examples were enabled, but no host examples have been
-  added to this repo yet.")
+message(STATUS "Host examples were enabled, but no host "
+  "examples have been added to this repo yet.")
 
 set(EXAMPLES
   )
