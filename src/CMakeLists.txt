@@ -9,3 +9,7 @@ endif()
 if(HAS_KOKKOS)
   add_subdirectory(kokkos)
 endif()
+
+if(HAS_THRUST)
+  add_subdirectory(thrust)
+endif()

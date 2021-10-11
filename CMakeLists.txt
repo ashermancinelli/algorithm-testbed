@@ -8,6 +8,9 @@ project(bqn-raja-ex CXX)
 message(STATUS "Enabling tests globally")
 enable_testing()
 
+# If cuda is enabled in any of the dependencies, we want extended lambda
+list(APPEND CMAKE_CUDA_FLAGS "--extended-lambda")
+
 include_directories(include)
 include_directories(${PROJECT_BINARY_DIR}/include)
 
@@ -23,7 +26,6 @@ if(TARGET RAJA)
     set(HAS_RAJA_CUDA ON)
     message(STATUS "Found CUDA targets for RAJA")
     enable_language(CUDA)
-    list(APPEND CMAKE_CUDA_FLAGS "--extended-lambda")
   else()
     message(STATUS "Could not find CUDA targets for RAJA")
   endif()
@@ -58,6 +60,25 @@ if(TARGET Kokkos::kokkos)
 else()
   message(STATUS "Could not find Kokkos. "
     "Kokkos examples will not be built.")
+endif()
+
+# Keeping these variables separate in case we want to break this into
+# multiple variables for rocthrust, thrust with omp, tbb, or whatever
+set(HAS_THRUST OFF)
+set(HAS_THRUST_CUDA OFF)
+find_package(CUDAToolkit QUIET)
+if(TARGET CUDA::cudart)
+  enable_language(CUDA)
+  set(HAS_THRUST ON)
+  set(HAS_THRUST_CUDA ON)
+  message(STATUS "Found Thrust")
+  add_library(thrust-tpl INTERFACE)
+  target_link_libraries(thrust-tpl
+    INTERFACE
+    CUDA::cudart
+    )
+else()
+  message(STATUS "Could not find Thrust")
 endif()
 
 set(HAS_HOST OFF)

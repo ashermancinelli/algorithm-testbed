@@ -7,19 +7,10 @@
 #cmakedefine HAS_KOKKOS
 #cmakedefine HAS_KOKKOS_CUDA
 
+#cmakedefine HAS_THRUST
+#cmakedefine HAS_THRUST_CUDA
+
 #cmakedefine HAS_HOST
-
-#ifdef HAS_RAJA_CUDA
-#define RAJA_LAMBDA [=] __device__
-#else
-#define RAJA_LAMBDA [=]
-#endif
-
-#ifdef HAS_KOKKOS_CUDA
-#define KOKKOS_LAMBDA [=] __device__
-#else
-#define KOKKOS_LAMBDA [=]
-#endif
 
 #include <vector>
 #include <string>

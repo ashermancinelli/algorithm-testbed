@@ -1,6 +1,12 @@
 #pragma once
 #include "common-config.hpp"
 
+#ifdef HAS_RAJA_CUDA
+#define RAJA_LAMBDA [=] __device__
+#else
+#define RAJA_LAMBDA [=]
+#endif
+
 #include <RAJA/RAJA.hpp>
 #include <umpire/Allocator.hpp>
 #include <umpire/ResourceManager.hpp>

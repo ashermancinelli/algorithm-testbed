@@ -1,6 +1,12 @@
 #pragma once
 #include "common-config.hpp"
 
+#ifdef HAS_KOKKOS_CUDA
+#define KOKKOS_LAMBDA [=] __device__
+#else
+#define KOKKOS_LAMBDA [=]
+#endif
+
 #include <Kokkos_Core.hpp>
 #include <Kokkos_Parallel.hpp>
 #include <Kokkos_View.hpp>
