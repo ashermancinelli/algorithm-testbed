@@ -3,6 +3,7 @@
 This directory contains documentation for example problems used in the repo.
 See the following subdirectories for more:
 
+* [Thrust](./thrust/README.md)
 * [BQN (APL dialect)](./bqn/README.md)
 * [kokkos](./kokkos/README.md)
 * [raja](./raja/README.md)
