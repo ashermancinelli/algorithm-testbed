@@ -1,11 +1,17 @@
 
 ## Problem
 
-Hello everyone, today I'd like to talk about this LeetCode problem.
-[Link here](https://leetcode.com/problems/longest-valid-parentheses/).
-For a given string made up of the characters `'('` and `')'`, return the length of the longest substring with balanced parentheses.
+Hello everyone, today I'd like to go through two solutions to a LeetCode problem.
+We'll first look at the solution with the BQN array language, and then we'll look at a GPU-capable solution in CUDA that uses the Thrust template library.
 
-For example, for the string `")()())"` the expected answer is 4, and for this string the expected answer is two: `"())"`.
+
+[Link here](https://leetcode.com/problems/longest-valid-parentheses/).
+
+Given a string containing just the characters '(' and ')', find the length of the longest valid parentheses substring.
+
+For example, for the string `")()())"` the expected answer is 4, and for this string the expected answer is two: `"())"`. Of course, for an empty string the answer is 0.
+
+We'll be looking at the solution in BQN first.
 
 ## BQN/APL Solution
 
@@ -87,6 +93,8 @@ Finally, let's look at all the test cases:
    F ""
 0
 ```
+
+Now that we've gone through the BQN solution, let's take a look at the CUDA and Thrust solution
 
 ## CUDA/Thrust Solution
 
