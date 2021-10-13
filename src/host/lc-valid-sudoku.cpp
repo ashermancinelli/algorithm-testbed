@@ -1,8 +1,9 @@
 #include <host-config.hpp>
 #include <optional>
+#include "sudoku-9x9.hpp"
 
-static constexpr std::size_t shape = 9;
-using Board = std::array<int, shape*shape>;
+using sudoku_boards::Board;
+using sudoku_boards::shape;
 
 // https://leetcode.com/problems/valid-sudoku/discuss/1487300/C%2B%2B-EASY-TO-UNDERSTAND
 auto isgood(Board board) -> bool {
@@ -44,35 +45,12 @@ auto isgood(Board board) -> bool {
 
 int main(int argc, char **argv) {
 
-  // clang-format off
-  auto good = Board{5, 3, 0,  0, 7, 0,  0, 0, 0,
-                    6, 0, 0,  1, 9, 5,  0, 0, 0,
-                    0, 9, 8,  0, 0, 0,  0, 6, 0,
-
-                    8, 0, 0,  0, 6, 0,  0, 0, 3,
-                    4, 0, 0,  8, 0, 3,  0, 0, 1,
-                    7, 0, 0,  0, 2, 0,  0, 0, 6,
-
-                    0, 6, 0,  0, 0, 0,  2, 8, 0,
-                    0, 0, 0,  4, 1, 9,  0, 0, 5,
-                    0, 0, 0,  0, 8, 0,  0, 7, 9};
-
-  auto bad = Board{8, 3, 0,  0, 7, 0,  0, 0, 0,
-                   6, 0, 0,  1, 9, 5,  0, 0, 0,
-                   0, 9, 8,  0, 0, 0,  0, 6, 0,
-
-                   8, 0, 0,  0, 6, 0,  0, 0, 3,
-                   4, 0, 0,  8, 0, 3,  0, 0, 1,
-                   7, 0, 0,  0, 2, 0,  0, 0, 6,
-
-                   0, 6, 0,  0, 0, 0,  2, 8, 0,
-                   0, 0, 0,  4, 1, 9,  0, 0, 5,
-                   0, 0, 0,  0, 8, 0,  0, 7, 9};
-  // clang-format on
 
   auto bool2str = [](bool b) { return b ? "true" : "false"; };
-  std::cout << "good: " << bool2str(isgood(good)) << "\n"
-            << "bad: " << bool2str(isgood(bad)) << "\n";
+  std::cout << "good: " << bool2str(isgood(sudoku_boards::good)) << "\n"
+            << "bad: " << bool2str(isgood(sudoku_boards::bad)) << "\n"
+            << "good online: " << bool2str(isgood(sudoku_boards::good_online)) << "\n"
+            << "bad online: " << bool2str(isgood(sudoku_boards::bad_online)) << "\n";
 
   return EXIT_SUCCESS;
 }
