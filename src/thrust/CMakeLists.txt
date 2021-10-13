@@ -1,5 +1,6 @@
 set(EXAMPLES
   lc-longest-valid-parens
+  lc-valid-sudoku
   )
 
 foreach(SRC ${EXAMPLES})

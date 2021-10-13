@@ -1,8 +1,5 @@
-
-message(STATUS "Host examples were enabled, but no host "
-  "examples have been added to this repo yet.")
-
 set(EXAMPLES
+  lc-valid-sudoku
   )
 
 foreach(SRC ${EXAMPLES})
