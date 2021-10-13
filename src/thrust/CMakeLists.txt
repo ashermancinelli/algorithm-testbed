@@ -1,11 +1,10 @@
-set(EXAMPLES
-  lc-longest-valid-parens
-  lc-valid-sudoku
+add_example(NAME "lc-valid-sudoku"
+  DEPENDS_ON HAS_THRUST
+  SRC lc-valid-sudoku.cu
+  LINK_LIBRARIES thrust-tpl
   )
-
-foreach(SRC ${EXAMPLES})
-  add_executable(${SRC} ${SRC}.cu)
-  message(STATUS "Adding Thrust example ${SRC}")
-  install(TARGETS ${SRC} DESTINATION bin)
-  add_test(NAME "test-${SRC}" COMMAND $<TARGET_FILE:${SRC}>)
-endforeach()
+add_example(NAME "lc-longest-valid-parens"
+  DEPENDS_ON HAS_THRUST
+  SRC lc-longest-valid-parens.cu
+  LINK_LIBRARIES thrust-tpl
+  )

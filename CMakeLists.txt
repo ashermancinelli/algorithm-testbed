@@ -130,4 +130,6 @@ install(
   include
   )
 
+include(cmake/AddExample.cmake)
+print_example_header()
 add_subdirectory(src)

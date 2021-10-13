@@ -1,109 +1,105 @@
+#include "sudoku-9x9.hpp"
 #include <host-config.hpp>
+#include <optional>
 #ifndef HAS_MPI
 #error "This example requires MPI to be available!"
 #endif
 #include <mpi.h>
 
-#include <optional>
+using sudoku_boards::blksz;
+using sudoku_boards::Board;
+using sudoku_boards::idx2;
+using sudoku_boards::idx3;
+using sudoku_boards::shape;
+using sudoku_boards::tl;
 
-using SudokuRange = std::array<int, 27>;
+// https://leetcode.com/problems/valid-sudoku/discuss/1487300/C%2B%2B-EASY-TO-UNDERSTAND
+auto isgood(const Board &board, MPI_Comm comm) -> bool {
 
-auto copy_row(int i, SudokuRange& r) -> SudokuRange {
-  SudokuRange rr;
-  // std::copy_n()
-}
-auto has_duplicates() -> bool { return false; }
+  // cartesian product iota
+  auto cpi = [](const int l) {
+    auto v = vector<pair<int, int>>(l*l, make_pair(0, 0));
+    for(int i=0; i<l; i++)
+      for(int j=0; j<l; j++)
+        v[i*l+j] = std::make_pair(i, j);
+    return v;
+  };
+  const auto indices = cpi(shape);
+  const auto block_offsets = cpi(blksz);
 
-// Only rank 0 actually recieves the board. All other ranks will get their data
-// from rank 0.
-//
-// Only the return value from rank 0 matters.
-auto isgood(std::optional<vector<int>> board, const int rank) -> bool {
-  MPI_Barrier(MPI_COMM_WORLD);
+  // shape, for all possible values. shape for index in type. 3 for the types
+  auto bits = vector<int>(shape * shape * 3, 0);
 
-  // 27 jobs, 9 checking rows, 9 checking cols, and 9 checking blocks
-  auto job_types = views::concat(
-      view::repeat(0) | views::take(9),
-      view::repeat(1) | views::take(9),
-      view::repeat(2) | views::take(9)
-      );
-  if(!rank)
-    std::cout << job_types << "\n";
+  int size, rank;
+  assert(!MPI_Comm_size(comm, &size));
+  assert(!MPI_Comm_rank(comm, &rank));
+  const auto work = indices.size();
 
-  auto indices = ranges::view::repeat_n(views::iota(0) | views::take(9), 3) | views::join;
-  if(!rank)
-    std::cout << indices << "\n";
-
-  auto has_duplicates = [=](SudokuRange &&r) {
-    //
-    return false;
+  auto dbg = [rank](string s) {
+    std::cout << "r" << rank << ": " << s << "\n";
   };
 
-  // Each entry corresponds to a possible status for a row, column, or box
-  // The first 9 entries correspond to each row
-  // The second 9 correspond to each column
-  // The final 9 correspond to each box.
-  //
-  // This array will be sum reduced at the end of the function to check if any
-  // ranks found duplicates
-  SudokuRange status;
-  std::fill(status.begin(), status.end(), 0);
+  dbg("chunking work");
+  const auto chunk_size = (work + size - 1) / size;
+  const auto chunked_work = indices | views::chunk(chunk_size) | to<vector>;
 
-  return false;
+  dbg("get indices for range");
+  const auto rank_indices = chunked_work[rank];
+
+  auto chkcell = [=, &board, &bits](const int r, const int c) {
+    const auto value = board[idx2(r, c)];
+    if (0 == value)
+      return;
+    for (int i = 0; i < shape; i++)
+      bits[idx3(r, c, 0)] += static_cast<int>(value == board[idx2(r, i)]);
+    for (int i = 0; i < shape; i++)
+      bits[idx3(r, c, 1)] += static_cast<int>(value == board[idx2(i, c)]);
+    for (const auto &[dx, dy] : block_offsets)
+      bits[idx3(r, c, 2)] +=
+          static_cast<int>(value == board[idx2(tl(r) + dy, tl(c) + dx)]);
+  };
+
+  assert(!MPI_Barrier(comm));
+  for (const auto &[r, c] : rank_indices)
+    chkcell(r, c);
+
+  // Ensure all ranks have reached their solutions
+  assert(!MPI_Barrier(comm));
+
+  vector<int> gbits(shape * shape * 3, 0);
+  assert(!MPI_Reduce(/*send=*/bits.data(),
+                     /*recv=*/gbits.data(),
+                     /*count=*/gbits.size(),
+                     /*datatype=*/MPI_INT,
+                     /*operation=*/MPI_SUM,
+                     /*dest rank=*/0,
+                     /*communicator=*/comm));
+  if (0 == rank) {
+    const auto m = std::accumulate(gbits.begin(), gbits.end(), -1, max) - 1;
+    return 0 == m;
+  } else
+    return false;
 }
 
 int main(int argc, char **argv) {
 
-  // clang-format off
-  auto good = vector<int>{5, 3, 0,  0, 7, 0,  0, 0, 0,
-                          6, 0, 0,  1, 9, 5,  0, 0, 0,
-                          0, 9, 8,  0, 0, 0,  0, 6, 0,
+  assert(!MPI_Init(&argc, &argv));
 
-                          8, 0, 0,  0, 6, 0,  0, 0, 3,
-                          4, 0, 0,  8, 0, 3,  0, 0, 1,
-                          7, 0, 0,  0, 2, 0,  0, 0, 6,
+  MPI_Comm comm = MPI_COMM_WORLD;
 
-                          0, 6, 0,  0, 0, 0,  2, 8, 0,
-                          0, 0, 0,  4, 1, 9,  0, 0, 5,
-                          0, 0, 0,  0, 8, 0,  0, 7, 9};
+  int rank;
+  assert(!MPI_Comm_rank(comm, &rank));
 
-  auto bad = vector<int>{8, 3, 0,  0, 7, 0,  0, 0, 0,
-                         6, 0, 0,  1, 9, 5,  0, 0, 0,
-                         0, 9, 8,  0, 0, 0,  0, 6, 0,
+  auto bool2str = [](bool b) { return b ? "true" : "false"; };
 
-                         8, 0, 0,  0, 6, 0,  0, 0, 3,
-                         4, 0, 0,  8, 0, 3,  0, 0, 1,
-                         7, 0, 0,  0, 2, 0,  0, 0, 6,
-
-                         0, 6, 0,  0, 0, 0,  2, 8, 0,
-                         0, 0, 0,  4, 1, 9,  0, 0, 5,
-                         0, 0, 0,  0, 8, 0,  0, 7, 9};
-  // clang-format on
-
-  MPI_Init(&argc, &argv);
-  int size, rank;
-
-  assert(!MPI_Comm_size(MPI_COMM_WORLD, &size));
-  assert(!MPI_Comm_rank(MPI_COMM_WORLD, &rank));
-
-  if (rank > 27) {
-    throw std::runtime_error("Rank greater than 27 is unsupported and doesn't "
-                             "make sense for this problem.");
-    return EXIT_FAILURE;
+  for (const auto &board : sudoku_boards::all_boards) {
+    assert(!MPI_Barrier(comm));
+    if (0 == rank)
+      std::cout << bool2str(isgood(board, comm)) << "\n";
+    else
+      isgood(board, comm);
   }
 
-  MPI_Barrier(MPI_COMM_WORLD);
-  if (0 == rank)
-    std::cout << "world size=" << size << "\n";
-  MPI_Barrier(MPI_COMM_WORLD);
-
-  if (0 == rank) {
-    std::cout << (isgood(good, rank) ? "true" : "false") << "\n";
-  } else {
-    isgood(std::nullopt, rank);
-  }
-
-  MPI_Barrier(MPI_COMM_WORLD);
-  MPI_Finalize();
+  assert(!MPI_Finalize());
   return EXIT_SUCCESS;
 }

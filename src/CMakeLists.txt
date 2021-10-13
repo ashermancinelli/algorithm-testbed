@@ -1,15 +1,4 @@
-if(HAS_RAJA)
-  add_subdirectory(raja)
-endif()
-
-if(HAS_HOST)
-  add_subdirectory(host)
-endif()
-
-if(HAS_KOKKOS)
-  add_subdirectory(kokkos)
-endif()
-
-if(HAS_THRUST)
-  add_subdirectory(thrust)
-endif()
+add_subdirectory(raja)
+add_subdirectory(host)
+add_subdirectory(kokkos)
+add_subdirectory(thrust)
