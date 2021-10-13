@@ -1,4 +1,4 @@
-add_example(NAME "lc-valid-sudoku"
+add_example(NAME "lc-valid-sudoku-thrust"
   DEPENDS_ON HAS_THRUST
   SRC lc-valid-sudoku.cu
   LINK_LIBRARIES thrust-tpl

@@ -9,7 +9,7 @@ using Board = std::array<int, shape * shape>;
 // we know our board is square
 constexpr auto blksz = static_cast<int>(std::sqrt(shape));
 const auto idx2 = [] (int r, int c) { return (r*shape)+c; };
-const auto idx3 = [] (int r, int c, int t) { return (r*shape+c)*shape+t; };
+const auto idx3 = [] (int r, int c, int t) { return (r*shape+c)*3+t; };
 const auto tl = [] (const int r) { return r-r%blksz; };
 
 // clang-format off

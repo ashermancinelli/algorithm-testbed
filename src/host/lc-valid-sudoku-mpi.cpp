@@ -35,15 +35,9 @@ auto isgood(const Board &board, MPI_Comm comm) -> bool {
   assert(!MPI_Comm_rank(comm, &rank));
   const auto work = indices.size();
 
-  auto dbg = [rank](string s) {
-    std::cout << "r" << rank << ": " << s << "\n";
-  };
-
-  dbg("chunking work");
   const auto chunk_size = (work + size - 1) / size;
   const auto chunked_work = indices | views::chunk(chunk_size) | to<vector>;
 
-  dbg("get indices for range");
   const auto rank_indices = chunked_work[rank];
 
   auto chkcell = [=, &board, &bits](const int r, const int c) {
@@ -93,11 +87,14 @@ int main(int argc, char **argv) {
   auto bool2str = [](bool b) { return b ? "true" : "false"; };
 
   for (const auto &board : sudoku_boards::all_boards) {
-    assert(!MPI_Barrier(comm));
+    bool ret;
     if (0 == rank)
-      std::cout << bool2str(isgood(board, comm)) << "\n";
+      ret = isgood(board, comm);
     else
       isgood(board, comm);
+    assert(!MPI_Barrier(comm));
+    if(0==rank)
+      std::cout << bool2str(ret) << "\n";
   }
 
   assert(!MPI_Finalize());
