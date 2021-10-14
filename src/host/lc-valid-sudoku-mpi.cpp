@@ -70,7 +70,7 @@ auto isgood(const Board &board, MPI_Comm comm) -> bool {
                      /*communicator=*/comm));
   if (0 == rank) {
     const auto m = std::accumulate(gbits.begin(), gbits.end(), -1, max) - 1;
-    return 0 == m;
+    return 1 > m;
   } else
     return false;
 }
