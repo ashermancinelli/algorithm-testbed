@@ -74,6 +74,7 @@ contains
 end module valid_sudoku
 
 program main
+  use futils
   use valid_sudoku
   implicit none
 

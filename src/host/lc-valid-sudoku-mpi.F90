@@ -81,108 +81,95 @@ contains
     tl = r - mod(r, blksz)
   end function
 
-subroutine report(ret)
-  implicit none
-  logical, intent(in) :: ret
-  integer :: rank, ierr
-  call MPI_Comm_rank(MPI_COMM_WORLD, rank, ierr)
-  if (0 .ne. rank) return
-  if (ret) then
-    print *, "true"
-  else
-    print *, "false"
-  end if
-end subroutine
+  ! "plus equals"
+  subroutine pe(a, b)
+    implicit none
+    integer, intent(inout) :: a
+    logical, intent(in) :: b
+    if (b) a = a + 1
+  end subroutine
 
-! "plus equals"
-subroutine pe(a, b)
-  implicit none
-  integer, intent(inout) :: a
-  logical, intent(in) :: b
-  if (b) a = a + 1
-end subroutine
+  subroutine job(board, bits, row, col)
+    implicit none
+    integer, dimension(0:(shape*shape)-1), intent(in) :: board
+    integer, dimension(shape * shape * 3), intent(inout) :: bits
+    integer, intent(in) :: row, col
+    integer :: v, i, j, dx, dy
 
-subroutine job(board, bits, row, col)
-  implicit none
-  integer, dimension(0:(shape*shape)-1), intent(in) :: board
-  integer, dimension(shape * shape * 3), intent(inout) :: bits
-  integer, intent(in) :: row, col
-  integer :: v, i, j, dx, dy
-
-  v = board(idx2(row, col))
-  if (v .eq. 0) return
-  j = 0
-  do i = 0, shape-1
-    if(v .eq. board(idx2(row, i))) then
-      bits(1+idx3(row, col, j)) = bits(1+idx3(row, col, j)) + 1
-    end if
-  end do
-  j = 1
-  do i = 0, shape-1
-    if (v .eq. board(idx2(i, col))) then
-      bits(1+idx3(row, col, j)) = bits(1+idx3(row, col, j)) + 1
-    end if
-  end do
-  j = 2
-  do dx = 0, blksz-1
-    do dy = 0, blksz-1
-      if (v .eq. board(idx2(tl(row) + dy, tl(col) + dx))) then
+    v = board(idx2(row, col))
+    if (v .eq. 0) return
+    j = 0
+    do i = 0, shape-1
+      if(v .eq. board(idx2(row, i))) then
         bits(1+idx3(row, col, j)) = bits(1+idx3(row, col, j)) + 1
       end if
     end do
-  end do
-end subroutine job
-
-subroutine isgood(board, ret)
-  implicit none
-  integer, dimension(0:(shape*shape)-1), intent(in) :: board
-  logical, intent(out) :: ret
-
-  integer, dimension(shape * shape * 3) :: bits
-  integer, dimension(shape * shape * 3) :: gbits
-  integer, dimension(0:(shape * shape)-1) :: rows, cols
-  integer :: v, row, col, i, j, dx, dy, chunk, rank, size, ierr
-
-  bits = 0
-  gbits = 0
-
-  call MPI_Comm_rank(MPI_COMM_WORLD, rank, ierr)
-  call MPI_Comm_size(MPI_COMM_WORLD, size, ierr)
-
-  do row = 0, shape-1
-    do col = 0, shape-1
-      rows(idx2(row, col)) = row
-      cols(idx2(row, col)) = col
+    j = 1
+    do i = 0, shape-1
+      if (v .eq. board(idx2(i, col))) then
+        bits(1+idx3(row, col, j)) = bits(1+idx3(row, col, j)) + 1
+      end if
     end do
-  end do
+    j = 2
+    do dx = 0, blksz-1
+      do dy = 0, blksz-1
+        if (v .eq. board(idx2(tl(row) + dy, tl(col) + dx))) then
+          bits(1+idx3(row, col, j)) = bits(1+idx3(row, col, j)) + 1
+        end if
+      end do
+    end do
+  end subroutine job
 
-  chunk = ((shape*shape) + size - 1) / size
+  subroutine isgood(board, ret)
+    implicit none
+    integer, dimension(0:(shape*shape)-1), intent(in) :: board
+    logical, intent(out) :: ret
 
-  if(0 .eq. rank) print *, 'Chunk size:', chunk
+    integer, dimension(shape * shape * 3) :: bits
+    integer, dimension(shape * shape * 3) :: gbits
+    integer, dimension(0:(shape * shape)-1) :: rows, cols
+    integer :: v, row, col, i, chunk, rank, size, ierr
 
-  do i = rank*chunk, (rank*chunk)+chunk-1
-    row = rows(i)
-    col = cols(i)
-    if (i .ge. (shape*shape)) exit
-    call job(board, bits, row, col)
-  end do
-  
-  call MPI_Reduce(bits, gbits, shape*shape, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD, ierr)
+    bits = 0
+    gbits = 0
 
-  if (0 .eq. rank) then
-    v = maxval(bits) - 1
-    print *, v
-    ret = (v .lt. 1)
-  else
-    ret = .false.
-  end if
+    call MPI_Comm_rank(MPI_COMM_WORLD, rank, ierr)
+    call MPI_Comm_size(MPI_COMM_WORLD, size, ierr)
 
-end subroutine isgood
+    do row = 0, shape-1
+      do col = 0, shape-1
+        rows(idx2(row, col)) = row
+        cols(idx2(row, col)) = col
+      end do
+    end do
+
+    chunk = ((shape*shape) + size - 1) / size
+
+    ! if(0 .eq. rank) print *, 'Chunk size:', chunk
+
+    do i = rank*chunk, (rank*chunk)+chunk-1
+      row = rows(i)
+      col = cols(i)
+      if (i .ge. (shape*shape)) exit
+      call job(board, bits, row, col)
+    end do
+    
+    call MPI_Reduce(bits, gbits, shape*shape, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD, ierr)
+
+    if (0 .eq. rank) then
+      v = maxval(bits) - 1
+      ret = (v .lt. 1)
+    else
+      ret = .false.
+    end if
+
+  end subroutine isgood
 
 end module sudoku
 
 program main
   use sudoku
+  use futils, only : check, report
   implicit none
   
   integer :: ierr, rank, size
@@ -202,15 +189,19 @@ program main
 
   call isgood(good_online, ret)
   call report(ret)
+  call check(ret, .true.)
 
   call isgood(good, ret)
   call report(ret)
+  call check(ret, .true.)
 
   call isgood(bad_online, ret)
   call report(ret)
+  call check(ret, .false.)
 
   call isgood(bad, ret)
   call report(ret)
+  call check(ret, .false.)
 
   call MPI_Finalize(ierr)
 

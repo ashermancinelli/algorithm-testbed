@@ -1,18 +1,7 @@
 // vi: ft=cpp
 #pragma once
 
-#cmakedefine HAS_RAJA
-#cmakedefine HAS_RAJA_CUDA
-
-#cmakedefine HAS_KOKKOS
-#cmakedefine HAS_KOKKOS_CUDA
-
-#cmakedefine HAS_THRUST
-#cmakedefine HAS_THRUST_CUDA
-
-#cmakedefine HAS_HOST
-
-#cmakedefine HAS_MPI
+#include <defines.h>
 
 #include <vector>
 #include <string>

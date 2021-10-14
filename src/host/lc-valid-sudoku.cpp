@@ -29,9 +29,9 @@ auto isgood(const Board &board) -> bool {
     const auto value = board[idx2(r, c)];
     if (0 == value)
       return;
-    for (int i = 0; i < shape; i++)
+    for (std::size_t i = 0; i < shape; i++)
       bits[idx3(r, c, 0)] += static_cast<int>(value == board[idx2(r, i)]);
-    for (int i = 0; i < shape; i++)
+    for (std::size_t i = 0; i < shape; i++)
       bits[idx3(r, c, 1)] += static_cast<int>(value == board[idx2(i, c)]);
     for (const auto &[dx, dy] : block_offsets)
       bits[idx3(r, c, 2)] +=
@@ -46,6 +46,9 @@ auto isgood(const Board &board) -> bool {
 }
 
 int main(int argc, char **argv) {
+
+  (void)argc;
+  (void)argv;
 
   auto bool2str = [](bool b) { return b ? "true" : "false"; };
 

@@ -12,7 +12,13 @@ message(STATUS "Enabling tests globally")
 enable_testing()
 
 # If cuda is enabled in any of the dependencies, we want extended lambda
-list(APPEND CMAKE_CUDA_FLAGS "--extended-lambda")
+list(APPEND CMAKE_CUDA_FLAGS "--extended-lambda --expt-relaxed-constexpr")
+
+add_library(warnings INTERFACE)
+target_compile_options(warnings INTERFACE
+  -Wall
+  -Wextra
+  )
 
 include_directories(include)
 include_directories(${PROJECT_BINARY_DIR}/include)
@@ -24,6 +30,7 @@ if(CMAKE_Fortran_COMPILER)
   set(HAS_FORTRAN ON)
   enable_language(Fortran)
   message(STATUS "Found Fortran compiler")
+  set(CMAKE_Fortran_MODULE_DIRECTORY ${PROJECT_BINARY_DIR}/include)
 else()
   message(STATUS "Could not find Fortran compiler")
 endif()
@@ -41,7 +48,8 @@ if(MPI_FOUND)
     target_link_libraries(mpi-tpl INTERFACE MPI::MPI_Fortran)
   endif()
 else()
-  message(FATAL_ERROR "Option REQUIRE_MPI was enabled, but MPI could not be found!")
+  message(STATUS "No MPI provider could be found. "
+    "MPI examples will not be built")
 endif()
 
 set(HAS_OPENMP OFF)
@@ -54,6 +62,7 @@ if(OpenMP_FOUND)
     INTERFACE
     OpenMP::OpenMP_CXX
     OpenMP::OpenMP_Fortran
+    warnings
     )
 else()
   message(STATUS "Could not find OpenMP")
@@ -90,6 +99,7 @@ if(TARGET RAJA)
     RAJA
     umpire
     mpi-tpl
+    warnings
     )
 else()
   message(STATUS "Could not find RAJA. "
@@ -111,6 +121,7 @@ if(TARGET Kokkos::kokkos)
     INTERFACE
     Kokkos::kokkos
     mpi-tpl
+    warnings
     )
 else()
   message(STATUS "Could not find Kokkos. "
@@ -132,6 +143,7 @@ if(TARGET CUDA::cudart)
     INTERFACE
     CUDA::cudart
     mpi-tpl
+    warnings
     )
 else()
   message(STATUS "Could not find Thrust. "
@@ -147,23 +159,18 @@ if(TARGET range-v3)
     INTERFACE
     range-v3
     mpi-tpl
+    warnings
     )
 else()
   message(STATUS "Could not find range-v3 library. "
     "Host examples will not be built.")
 endif()
 
-configure_file(
-  include/common-config.hpp.in
-  ${PROJECT_BINARY_DIR}/include/common-config.hpp
-  )
-install(
-  FILES
-  ${PROJECT_BINARY_DIR}/include/common-config.hpp
-  DESTINATION
-  include
-  )
+add_subdirectory(include)
 
 include(cmake/AddExample.cmake)
 print_example_header()
 add_subdirectory(src)
+
+file(GLOB MODULE_FILES ${PROJECT_BINARY_DIR}/include/*.mod)
+install(FILES ${MODULE_FILES} DESTINATION include)

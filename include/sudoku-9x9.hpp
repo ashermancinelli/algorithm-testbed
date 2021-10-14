@@ -1,5 +1,13 @@
 #pragma once
-#include <host-config.hpp>
+#include <array>
+#include <vector>
+#include <cmath>
+
+#ifdef HAS_CUDA
+#define HOST_DEVICE_ATTRS __host__ __device__
+#else
+#define HOST_DEVICE_ATTRS
+#endif
 
 namespace sudoku_boards {
 
@@ -7,10 +15,10 @@ static constexpr std::size_t shape = 9;
 using Board = std::array<int, shape * shape>;
 
 // we know our board is square
-constexpr auto blksz = static_cast<int>(std::sqrt(shape));
-const auto idx2 = [] (int r, int c) { return (r*shape)+c; };
-const auto idx3 = [] (int r, int c, int t) { return (r*shape+c)*3+t; };
-const auto tl = [] (const int r) { return r-r%blksz; };
+const auto blksz = static_cast<int>(std::sqrt(shape));
+const auto idx2 = [] HOST_DEVICE_ATTRS (int r, int c) { return (r*shape)+c; };
+const auto idx3 = [] HOST_DEVICE_ATTRS (int r, int c, int t) { return (r*shape+c)*3+t; };
+const auto tl = [] HOST_DEVICE_ATTRS (const int r) { return r-r%blksz; };
 
 // clang-format off
 
@@ -64,7 +72,7 @@ const auto bad = Board{8, 3, 0,  0, 7, 0,  0, 0, 0,
 
 // clang-format on
 
-static const auto all_boards = vector<Board>{
+static const auto all_boards = std::vector<Board>{
     good_online,
     good,
     bad_online,
