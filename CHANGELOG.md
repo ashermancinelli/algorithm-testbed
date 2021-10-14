@@ -6,11 +6,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [v0.2.0] - 10-14-2021
+
 ### Added
 
 - Documentation subdirectory
+- Finished distributed, cuda enabled valid sudoku checker
 
-## [v0.1.2] - 10.8.2021
+### Changed
+
+- Layout of Fortran code. Shared module exists in the include directory, and is given to each consumer targets.
+- Revamped build system.
+
+## [v0.1.2] - 10-8-2021
 
 ### Added
 
