@@ -1,8 +1,9 @@
 
 module sudoku
 
+  !include 'mpif.h'
+  use mpi
   implicit none
-  include 'mpif.h'
 
   integer, parameter :: shape = 9
   integer, parameter :: blksz = 3
@@ -83,8 +84,8 @@ contains
 subroutine report(ret)
   implicit none
   logical, intent(in) :: ret
-  integer :: rank
-  call MPI_Comm_rank(MPI_COMM_WORLD, rank)
+  integer :: rank, ierr
+  call MPI_Comm_rank(MPI_COMM_WORLD, rank, ierr)
   if (0 .ne. rank) return
   if (ret) then
     print *, "true"
@@ -112,16 +113,22 @@ subroutine job(board, bits, row, col)
   if (v .eq. 0) return
   j = 0
   do i = 0, shape-1
-    call pe(bits(1+idx3(row, col, j)), (v .eq. board(idx2(row, i))))
+    if(v .eq. board(idx2(row, i))) then
+      bits(1+idx3(row, col, j)) = bits(1+idx3(row, col, j)) + 1
+    end if
   end do
   j = 1
   do i = 0, shape-1
-    call pe(bits(1+idx3(row, col, j)), (v .eq. board(idx2(i, col))))
+    if (v .eq. board(idx2(i, col))) then
+      bits(1+idx3(row, col, j)) = bits(1+idx3(row, col, j)) + 1
+    end if
   end do
   j = 2
   do dx = 0, blksz-1
     do dy = 0, blksz-1
-      call pe(bits(1+idx3(row, col, j)), (v .eq. board(idx2(tl(row) + dy, tl(col) + dx))))
+      if (v .eq. board(idx2(tl(row) + dy, tl(col) + dx))) then
+        bits(1+idx3(row, col, j)) = bits(1+idx3(row, col, j)) + 1
+      end if
     end do
   end do
 end subroutine job
@@ -139,8 +146,8 @@ subroutine isgood(board, ret)
   bits = 0
   gbits = 0
 
-  call MPI_Comm_rank(MPI_COMM_WORLD, rank)
-  call MPI_Comm_size(MPI_COMM_WORLD, size)
+  call MPI_Comm_rank(MPI_COMM_WORLD, rank, ierr)
+  call MPI_Comm_size(MPI_COMM_WORLD, size, ierr)
 
   do row = 0, shape-1
     do col = 0, shape-1
@@ -151,32 +158,24 @@ subroutine isgood(board, ret)
 
   chunk = ((shape*shape) + size - 1) / size
 
-  !do i = rank*chunk, (rank*chunk)+chunk-1
-  !  row = rows(i)
-  !  col = cols(i)
-  !  if (i .ge. (shape*shape)) exit
-  !  print *, row, col
-  !  call job(board, bits, row, col)
-  !end do
-  !print *, 'Done running jobs'
-  
-!  assert(!MPI_Reduce(/*send=*/bits.data(),
-!                     /*recv=*/gbits.data(),
-!                     /*count=*/gbits.size(),
-!                     /*datatype=*/MPI_INT,
-!                     /*operation=*/MPI_SUM,
-!                     /*dest rank=*/0,
-!                     /*communicator=*/comm));
-  !call MPI_Reduce(bits, gbits, shape*shape, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD, ierr)
+  if(0 .eq. rank) print *, 'Chunk size:', chunk
 
-  !if (0 .eq. rank) then
-  !  v = maxval(bits) - 1
-  !  print *, v
-  !  ret = (v .lt. 1)
-  !else
-  !  ret = .false.
-  !end if
-  ret = .false.
+  do i = rank*chunk, (rank*chunk)+chunk-1
+    row = rows(i)
+    col = cols(i)
+    if (i .ge. (shape*shape)) exit
+    call job(board, bits, row, col)
+  end do
+  
+  call MPI_Reduce(bits, gbits, shape*shape, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD, ierr)
+
+  if (0 .eq. rank) then
+    v = maxval(bits) - 1
+    print *, v
+    ret = (v .lt. 1)
+  else
+    ret = .false.
+  end if
 
 end subroutine isgood
 
@@ -191,24 +190,28 @@ program main
 
   call MPI_Init(ierr)
 
-  call MPI_Comm_rank(MPI_COMM_WORLD, rank)
-  call MPI_Comm_size(MPI_COMM_WORLD, size)
+  call MPI_Comm_rank(MPI_COMM_WORLD, rank, ierr)
+  call MPI_Comm_size(MPI_COMM_WORLD, size, ierr)
 
+  if (size .gt. 8) then
+    if (0 .eq. rank) print *, 'World size greater than 8 is not supported'
+    call MPI_Abort(MPI_COMM_WORLD, 1, ierr)
+    stop 1
+  end if
   if (0 .eq. rank) print *, "Running with world size of", size
 
   call isgood(good_online, ret)
   call report(ret)
 
-  !call isgood(good, ret)
-  !call report(ret)
+  call isgood(good, ret)
+  call report(ret)
 
-  !call isgood(bad_online, ret)
-  !call report(ret)
+  call isgood(bad_online, ret)
+  call report(ret)
 
-  !call isgood(bad, ret)
-  !call report(ret)
+  call isgood(bad, ret)
+  call report(ret)
 
   call MPI_Finalize(ierr)
-  print *, 'finalized'
 
 end program
