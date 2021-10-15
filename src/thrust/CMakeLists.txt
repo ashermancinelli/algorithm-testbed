@@ -14,7 +14,7 @@ add_example(NAME "lc-longest-valid-parens"
   LINK_LIBRARIES thrust-tpl
   )
 
-if(HAS_MPI)
+if(HAS_MPI AND HAS_THRUST)
   foreach(nproc 2 4 6 8)
     add_test(
       NAME "test-${nproc}proc-lc-valid-sudoku-mpi-thrust"

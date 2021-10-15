@@ -13,37 +13,36 @@ using sudoku_boards::idx3;
 using sudoku_boards::shape;
 using sudoku_boards::tl;
 
+auto cartesian_product_iota = [](const int i, const int j) {
+  auto v = vector<pair<int, int>>(i*j, make_pair(0, 0));
+  for(int ii=0; ii<i; ii++)
+    for(int jj=0; jj<j; jj++)
+      v[ii*i+jj] = std::make_pair(ii, jj);
+  return v;
+};
+
 // https://leetcode.com/problems/valid-sudoku/discuss/1487300/C%2B%2B-EASY-TO-UNDERSTAND
 auto isgood(const Board &board, MPI_Comm comm) -> bool {
-
-  // cartesian product iota
-  auto cpi = [](const int l) {
-    auto v = vector<pair<int, int>>(l*l, make_pair(0, 0));
-    for(int i=0; i<l; i++)
-      for(int j=0; j<l; j++)
-        v[i*l+j] = std::make_pair(i, j);
-    return v;
-  };
-  const auto indices = cpi(shape);
-  const auto block_offsets = cpi(blksz);
-
-  // shape, for all possible values. shape for index in type. 3 for the types
-  auto bits = vector<int>(shape * shape * 3, 0);
 
   int size, rank;
   assert(!MPI_Comm_size(comm, &size));
   assert(!MPI_Comm_rank(comm, &rank));
-  const auto work = indices.size();
+  const auto work = shape*shape;
 
   const auto chunk_size = (work + size - 1) / size;
-  const auto chunked_work = indices | views::chunk(chunk_size) | to<vector>;
 
-  const auto rank_indices = chunked_work[rank];
+  auto indices = cartesian_product_iota(shape, shape);
+  while (indices.size() < chunk_size*size) // backfill dummy entries
+    indices.push_back(std::make_pair(-1, -1));
+
+  const auto block_offsets = cartesian_product_iota(blksz, blksz);
+
+  auto bits = vector<int>(shape * shape * 3, 0);
 
   auto chkcell = [=, &board, &bits](const int r, const int c) {
+    if (r < 0) return;
     const auto value = board[idx2(r, c)];
-    if (0 == value)
-      return;
+    if (0 == value) return;
     for (std::size_t i = 0; i < shape; i++)
       bits[idx3(r, c, 0)] += static_cast<int>(value == board[idx2(r, i)]);
     for (std::size_t i = 0; i < shape; i++)
@@ -54,8 +53,8 @@ auto isgood(const Board &board, MPI_Comm comm) -> bool {
   };
 
   assert(!MPI_Barrier(comm));
-  for (const auto &[r, c] : rank_indices)
-    chkcell(r, c);
+  for(std::size_t i=chunk_size*rank; i < chunk_size+(chunk_size*rank); i++)
+  { const auto &[r, c] = indices[i]; chkcell(r, c); }
 
   // Ensure all ranks have reached their solutions
   assert(!MPI_Barrier(comm));
@@ -71,8 +70,7 @@ auto isgood(const Board &board, MPI_Comm comm) -> bool {
   if (0 == rank) {
     const auto m = std::accumulate(gbits.begin(), gbits.end(), -1, max) - 1;
     return 1 > m;
-  } else
-    return false;
+  } else return false;
 }
 
 int main(int argc, char **argv) {

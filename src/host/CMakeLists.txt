@@ -1,10 +1,9 @@
 add_example(NAME "lc-valid-sudoku"
-  DEPENDS_ON HAS_RANGEV3
   SRC lc-valid-sudoku.cpp
   LINK_LIBRARIES rangev3-tpl
   )
 add_example(NAME "lc-valid-sudoku-mpi"
-  DEPENDS_ON HAS_RANGEV3 HAS_MPI
+  DEPENDS_ON HAS_MPI
   SRC lc-valid-sudoku-mpi.cpp
   LINK_LIBRARIES mpi-tpl rangev3-tpl
   )
