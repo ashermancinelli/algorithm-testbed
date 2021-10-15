@@ -5,6 +5,7 @@
 #error "This example requires MPI to be available!"
 #endif
 #include <mpi.h>
+#include <cassert>
 
 using sudoku_boards::blksz;
 using sudoku_boards::Board;
@@ -12,6 +13,7 @@ using sudoku_boards::idx2;
 using sudoku_boards::idx3;
 using sudoku_boards::shape;
 using sudoku_boards::tl;
+using sudoku_boards::max;
 
 auto cartesian_product_iota = [](const int i, const int j) {
   auto v = vector<pair<int, int>>(i*j, make_pair(0, 0));

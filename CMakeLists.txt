@@ -11,7 +11,9 @@ message(STATUS "Enabling tests globally")
 enable_testing()
 
 # Workaround for gcc8 and cuda10
-if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU"
+    AND "${CMAKE_CXX_COMPILER_VERSION}" VERSION_GREATER_EQUAL "8.0.0"
+    AND "${CMAKE_CXX_COMPILER_VERSION}" VERSION_LESS "9.0.0")
   message(STATUS "Applying workaround for GCC and CUDA 10 ieee")
   set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler -mno-float128")
 endif()

@@ -11,4 +11,6 @@
 
 #cmakedefine HAS_HOST
 
+#cmakedefine HAS_RANGEV3
+
 #cmakedefine HAS_MPI

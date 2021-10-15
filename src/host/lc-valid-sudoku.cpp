@@ -7,6 +7,7 @@ using sudoku_boards::idx2;
 using sudoku_boards::idx3;
 using sudoku_boards::shape;
 using sudoku_boards::tl;
+using sudoku_boards::max;
 
 // https://leetcode.com/problems/valid-sudoku/discuss/1487300/C%2B%2B-EASY-TO-UNDERSTAND
 auto isgood(const Board &board) -> bool {

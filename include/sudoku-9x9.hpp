@@ -14,11 +14,11 @@ namespace sudoku_boards {
 static constexpr std::size_t shape = 9;
 using Board = std::array<int, shape * shape>;
 
-// we know our board is square
 const auto blksz = static_cast<int>(std::sqrt(shape));
 const auto idx2 = [] HOST_DEVICE_ATTRS (int r, int c) { return (r*shape)+c; };
 const auto idx3 = [] HOST_DEVICE_ATTRS (int r, int c, int t) { return (r*shape+c)*3+t; };
 const auto tl = [] HOST_DEVICE_ATTRS (const int r) { return r-r%blksz; };
+const auto max = [] (int a, int b) { return std::max(a, b); };
 
 // clang-format off
 
