@@ -13,7 +13,7 @@ using sudoku_boards::idx2;
 using sudoku_boards::idx3;
 using sudoku_boards::shape;
 using sudoku_boards::tl;
-using sudoku_boards::max;
+namespace sb = sudoku_boards;
 
 auto cartesian_product_iota = [](const int i, const int j) {
   auto v = vector<pair<int, int>>(i*j, make_pair(0, 0));
@@ -70,7 +70,7 @@ auto isgood(const Board &board, MPI_Comm comm) -> bool {
                      /*dest rank=*/0,
                      /*communicator=*/comm));
   if (0 == rank) {
-    const auto m = std::accumulate(gbits.begin(), gbits.end(), -1, max) - 1;
+    const auto m = std::accumulate(gbits.begin(), gbits.end(), -1, sb::max) - 1;
     return 1 > m;
   } else return false;
 }

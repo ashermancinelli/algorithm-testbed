@@ -7,7 +7,7 @@ using sudoku_boards::idx2;
 using sudoku_boards::idx3;
 using sudoku_boards::shape;
 using sudoku_boards::tl;
-using sudoku_boards::max;
+namespace sb = sudoku_boards;
 
 // https://leetcode.com/problems/valid-sudoku/discuss/1487300/C%2B%2B-EASY-TO-UNDERSTAND
 auto isgood(const Board &board) -> bool {
@@ -42,7 +42,7 @@ auto isgood(const Board &board) -> bool {
   for (const auto &[r, c] : indices)
     chkcell(r, c);
 
-  const auto m = std::accumulate(bits.begin(), bits.end(), -1, max) - 1;
+  const auto m = std::accumulate(bits.begin(), bits.end(), -1, sb::max) - 1;
   return 1 > m;
 }
 
