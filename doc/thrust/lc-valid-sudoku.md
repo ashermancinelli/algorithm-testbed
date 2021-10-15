@@ -116,9 +116,51 @@ Next I do something similar to get the indices for the boxes.
   0 0 0 1 1 1 2 2 2  
                     ┘
 ```
-This creats indices for the first three boxes.
+
+This creats indices for the first three boxes, and you can probably imagine how to extend this to get the indices for all the boxes. I just add three to the previous indices, and then add six, and then append them all together. Here's the second layer:
+```
+   3‿9⥊bi+3
+┌─                   
+╵ 3 3 3 4 4 4 5 5 5  
+  3 3 3 4 4 4 5 5 5  
+  3 3 3 4 4 4 5 5 5  
+                    ┘
+```
+
+And the final layer:
+```
+   3‿9⥊bi+6
+┌─                   
+╵ 6 6 6 7 7 7 8 8 8  
+  6 6 6 7 7 7 8 8 8  
+  6 6 6 7 7 7 8 8 8  
+                    ┘
+```
+
+And all three layers of indices stacked on top of each other:
+```
+   9‿9⥊(bi∾(3+bi)∾(6+bi))
+┌─                   
+╵ 0 0 0 1 1 1 2 2 2  
+  0 0 0 1 1 1 2 2 2  
+  0 0 0 1 1 1 2 2 2  
+  3 3 3 4 4 4 5 5 5  
+  3 3 3 4 4 4 5 5 5  
+  3 3 3 4 4 4 5 5 5  
+  6 6 6 7 7 7 8 8 8  
+  6 6 6 7 7 7 8 8 8  
+  6 6 6 7 7 7 8 8 8  
+                    ┘
+```
+
+Using these indices, I group all the elements of the input, and then check all of them for duplicates:
 ```
    bs ← Dup Fl¨(bi∾(3+bi)∾(6+bi))⊔𝕩 # Check blocks
-   
+```
+
+And in the end I check if there were duplicates in the blocks, in the rows, or in the columns, and use that to index into our strings that indicate whether our sudoku board is valid or not.
+```
    (bs ∨ rs ∨ cs)⊑"true"‿"false"
 ```
+
+## Fortran
