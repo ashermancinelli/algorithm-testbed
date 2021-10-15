@@ -13,10 +13,6 @@
 #include <tuple>
 #include <limits>
 
-#ifdef HAS_MPI
-#include <mpi.h>
-#endif
-
 using std::string;
 using std::tuple;
 using std::vector;

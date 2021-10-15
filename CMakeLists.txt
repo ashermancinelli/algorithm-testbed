@@ -2,17 +2,28 @@ cmake_minimum_required (VERSION 3.18)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CUDA_STANDARD 17)
+set(CMAKE_CUDA_STANDARD 14)
 set(CMAKE_CUDA_STANDARD_REQUIRED TRUE)
-
 
 project(portable-alg-testbed CXX)
 
 message(STATUS "Enabling tests globally")
 enable_testing()
 
+# Workaround for gcc8 and cuda10
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+  message(STATUS "Applying workaround for GCC and CUDA 10 ieee")
+  set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler -mno-float128")
+endif()
+
+if("${CMAKE_CUDA_ARCHITECTURES}" STREQUAL "")
+  set(CA 60)
+  message(STATUS "Defaulting CUDA architectures to ${CA}")
+  set(CMAKE_CUDA_ARCHITECTURES ${CA})
+endif()
+
 # If cuda is enabled in any of the dependencies, we want extended lambda
-list(APPEND CMAKE_CUDA_FLAGS "--extended-lambda --expt-relaxed-constexpr")
+set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --extended-lambda --expt-relaxed-constexpr")
 
 add_library(warnings INTERFACE)
 target_compile_options(warnings INTERFACE
@@ -150,12 +161,12 @@ else()
     "Thrust examples will not be built.")
 endif()
 
-set(HAS_HOST OFF)
-find_package(range-v3)
+set(HAS_RANGEV3 OFF)
+find_package(range-v3 QUIET)
 if(TARGET range-v3)
-  set(HAS_HOST ON)
-  add_library(host-tpl INTERFACE)
-  target_link_libraries(host-tpl
+  set(HAS_RANGEV3 ON)
+  add_library(rangev3-tpl INTERFACE)
+  target_link_libraries(rangev3-tpl
     INTERFACE
     range-v3
     mpi-tpl
@@ -163,7 +174,7 @@ if(TARGET range-v3)
     )
 else()
   message(STATUS "Could not find range-v3 library. "
-    "Host examples will not be built.")
+    "Range v3 examples will not be built.")
 endif()
 
 add_subdirectory(include)
