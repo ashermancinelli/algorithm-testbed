@@ -164,3 +164,48 @@ And in the end I check if there were duplicates in the blocks, in the rows, or i
 ```
 
 ## Fortran
+
+
+This solution introduces a way to think about the problem that I'll carry through the rest of the solutions for the most part. I create an array thrice the size of the grid. Note that this is not as space (or time) efficient as many of the solutions that you can find on the discussion page for the leetcode problem, but it is much easier to parallelize and that's really the point of this video.
+
+You can think of the array as a three dimensional matrix, where the rows represent the index into the type of vlidity we are checking for, the columns represent the integer value of the cell in the sudoku board, and the length three cells indicate the type of check we are performing,
+where 0 is for checking rows, 1 is for checking columns, and two is for checking blocks.
+For example, say the sudoku board has value 7 in row 2 column 3. Checking the sudoku board at row 2 column 3 against other values in the same row would increment the value at row 2, column 7, element 2 in our answer array.
+
+If any value in our final array is greater than one, then we know we have at least one duplicate in at least one row, column, or block.
+```fortran
+subroutine isgood(board, ret)
+  integer, dimension(0:(shape*shape)-1), intent(in) :: board
+  logical, intent(out) :: ret
+
+  integer, dimension(0:(shape * shape * 3)-1) :: bits
+  integer :: v, row, col, i, j, dx, dy
+
+  bits = 0
+
+  do row = 0, shape-1
+    do col = 0, shape-1
+      v = board(idx2(row, col))
+      if (v .eq. 0) cycle
+      j = 0
+      do i = 0, shape-1
+        call pe(bits(idx3(row, col, j)), (v .eq. board(idx2(row, i))))
+      end do
+      j = 1
+      do i = 0, shape-1
+        call pe(bits(idx3(row, col, j)), (v .eq. board(idx2(i, col))))
+      end do
+      j = 2
+      do dx = 0, blksz-1
+        do dy = 0, blksz-1
+          call pe(bits(idx3(row, col, j)), (v .eq. board(idx2(tl(row) + dy, tl(col) + dx))))
+        end do
+      end do
+    end do
+  end do
+  
+  v = maxval(bits) - 1
+
+  ret = (v .lt. 1)
+end subroutine
+```
