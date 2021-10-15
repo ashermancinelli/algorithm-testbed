@@ -9,19 +9,19 @@ using sudoku_boards::shape;
 using sudoku_boards::tl;
 namespace sb = sudoku_boards;
 
+// cartesian product iota
+auto cpi = [](const int x, const int y) {
+  auto v = vector<pair<int, int>>(x * y, make_pair(0, 0));
+  for (int i = 0; i < x; i++)
+    for (int j = 0; j < y; j++)
+      v[i * x + j] = std::make_pair(i, j);
+  return v;
+};
+
 // https://leetcode.com/problems/valid-sudoku/discuss/1487300/C%2B%2B-EASY-TO-UNDERSTAND
 auto isgood(const Board &board) -> bool {
-
-  // cartesian product iota
-  auto cpi = [](const int l) {
-    auto v = vector<pair<int, int>>(l * l, make_pair(0, 0));
-    for (int i = 0; i < l; i++)
-      for (int j = 0; j < l; j++)
-        v[i * l + j] = std::make_pair(i, j);
-    return v;
-  };
-  const auto indices = cpi(shape);
-  const auto block_offsets = cpi(blksz);
+  const auto indices = cpi(shape, shape);
+  const auto block_offsets = cpi(blksz, blksz);
 
   // shape, for all possible values. shape for index in type. 3 for the types
   auto bits = vector<int>(shape * shape * 3, 0);
