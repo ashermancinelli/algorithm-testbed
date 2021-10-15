@@ -6,7 +6,6 @@
 #include <mpi.h>
 #include <thrust/extrema.h>
 
-// using sudoku_boards::blksz;
 using sudoku_boards::Board;
 using sudoku_boards::shape;
 
