@@ -1,3 +1,4 @@
+add_subdirectory(algol68)
 add_subdirectory(raja)
 add_subdirectory(host)
 add_subdirectory(kokkos)
