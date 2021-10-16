@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [v0.2.1] - 10-16-2021
+
+### Changed
+
+- The repository name to "Algorithm Testbed"
+
+### Added
+
+- Docs in preparation for HPC YT video
+
 ## [v0.2.0] - 10-14-2021
 
 ### Added
