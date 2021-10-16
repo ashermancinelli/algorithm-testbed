@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- Python examples
+
 ## [v0.2.1] - 10-16-2021
 
 ### Changed
@@ -15,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Docs in preparation for HPC YT video
+- Infrastructure for algol 68 examples
 
 ## [v0.2.0] - 10-14-2021
 

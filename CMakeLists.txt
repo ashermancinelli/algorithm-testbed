@@ -149,6 +149,18 @@ else()
     "Range v3 examples will not be built.")
 endif()
 
+set(HAS_PYTHON OFF)
+find_package(Python COMPONENTS Interpreter QUIET)
+if(TARGET Python::Interpreter
+    AND ${Python_VERSION} VERSION_GREATER "3.4")
+  message(STATUS "Found Python: ${Python_EXECUTABLE}")
+  set(HAS_PYTHON ON)
+else()
+  message(STATUS "Python could not be found. "
+    "Python examples will not be built")
+endif()
+
+
 add_subdirectory(include)
 
 include(cmake/AddExample.cmake)
