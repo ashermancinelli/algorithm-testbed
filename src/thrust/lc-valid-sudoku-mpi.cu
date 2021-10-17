@@ -54,13 +54,13 @@ auto isgood(const Board &board, MPI_Comm comm) -> bool {
   setbits<<<1, tpb>>>(raw_d_bits, thrust::raw_pointer_cast(d_board.data()),
                       bounds);
   cudaDeviceSynchronize();
-  auto h_bits = host_vector<int>(nbits, 0);
+  auto h_bits = thrust::host_vector<int>(nbits, 0);
   cudaMemcpy(h_bits.data(), raw_d_bits, nbits, cudaMemcpyDeviceToHost);
 
   // Ensure all ranks have reached their solutions
   assert(!MPI_Barrier(comm));
 
-  host_vector<int> gbits(shape * shape * 3, 0);
+  thrust::host_vector<int> gbits(shape * shape * 3, 0);
   assert(!MPI_Reduce(/*send=*/h_bits.data(),
                      /*recv=*/gbits.data(),
                      /*count=*/gbits.size(),
