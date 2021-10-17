@@ -3,7 +3,7 @@ cmake_minimum_required (VERSION 3.18)
 project(portable-alg-testbed CXX)
 
 include(cmake/GlobalVars.cmake)
-
+include(cmake/Linters.cmake)
 include(cmake/FindAlgol68Compiler.cmake)
 
 include(CheckLanguage)
@@ -155,11 +155,11 @@ if(TARGET Python::Interpreter
     AND ${Python_VERSION} VERSION_GREATER "3.4")
   message(STATUS "Found Python: ${Python_EXECUTABLE}")
   set(HAS_PYTHON ON)
+  include(cmake/SetupPythonEnv.cmake)
 else()
   message(STATUS "Python could not be found. "
     "Python examples will not be built")
 endif()
-
 
 add_subdirectory(include)
 
