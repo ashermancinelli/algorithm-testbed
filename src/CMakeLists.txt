@@ -1,6 +1,7 @@
 add_subdirectory(algol68)
 add_subdirectory(raja)
-add_subdirectory(host)
+add_subdirectory(cpp)
+add_subdirectory(fortran)
 add_subdirectory(kokkos)
 add_subdirectory(thrust)
 add_subdirectory(python)
