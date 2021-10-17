@@ -6,6 +6,7 @@ find_program(FIND_EXE "find")
 find_program(CLANGFORMAT_EXE "clang-format")
 find_program(CMAKEFORMAT_EXE "cmake-format")
 find_program(PY_FORMAT "black")
+find_program(FTN_FORMAT "fprettify")
 
 if(${FIND_EXE} STREQUAL "FIND_EXE-NOTFOUND")
   message(STATUS "Find command could not be found. "
@@ -54,6 +55,20 @@ else()
       py-format
       COMMENT "Formatting Python code"
       COMMAND ${FIND_EXE} src -name '*.py' -exec ${PY_FORMAT} {} \'\;\'
+      WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+    )
+  endif()
+
+  if("${FTN_FORMAT}" STREQUAL "FTN_FORMAT-NOTFOUND")
+    message(STATUS "No 'fprettify' executable could be found. "
+      "Fortran formatting target will not be created.")
+  else()
+    list(APPEND ALL_FORMAT_TARGETS ftn-format)
+    message(STATUS "Adding target 'ftn-format'")
+    add_custom_target(
+      ftn-format
+      COMMENT "Formatting Fortran code"
+      COMMAND ${FIND_EXE} src include -name '*.F90' -o -name '*.f90' -o -name '*.for' -exec ${FTN_FORMAT} {} \'\;\'
       WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
     )
   endif()

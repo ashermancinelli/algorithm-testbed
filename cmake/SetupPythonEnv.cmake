@@ -13,7 +13,7 @@ else()
     '
     COMMAND
     ${BASH_EXE} -c '
-    ${PROJECT_BINARY_DIR}/venv/bin/pip install -r ${PROJECT_SOURCE_DIR}/src/python/requirements.txt
+    ${PROJECT_BINARY_DIR}/venv/bin/pip install -r ${PROJECT_SOURCE_DIR}/requirements.txt
     '
     )
 endif()

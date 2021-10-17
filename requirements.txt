@@ -2,3 +2,4 @@ numpy
 black
 mpi4py
 cmakelang
+fprettify
