@@ -1,6 +1,6 @@
 #include <thrust-config.hpp>
 
-auto solve(const string& problem) -> int {
+auto solve(const string &problem) -> int {
   const int N = problem.size();
   if (0 == N)
     return 0;
@@ -15,10 +15,10 @@ auto solve(const string& problem) -> int {
   std::iota(starts.begin(), starts.end(), 0);
 
   int max_len = std::accumulate(
-      starts.begin(), starts.end(), 0,
-      [&d_mapping, N](int max_so_far, int i) {
-        device_vector<int> prefix(N-i);
-        thrust::inclusive_scan(d_mapping.begin()+i, d_mapping.end(), prefix.begin());
+      starts.begin(), starts.end(), 0, [&d_mapping, N](int max_so_far, int i) {
+        device_vector<int> prefix(N - i);
+        thrust::inclusive_scan(d_mapping.begin() + i, d_mapping.end(),
+                               prefix.begin());
 
         device_vector<int> indices(N - i);
         thrust::sequence(indices.begin(), indices.end(), 0);
@@ -42,7 +42,7 @@ auto solve(const string& problem) -> int {
 }
 
 int main() {
-  for (const string &problem : { ")()())", "(()", "" })
+  for (const string &problem : {")()())", "(()", ""})
     std::cout << solve(problem) << "\n";
   return 0;
 }

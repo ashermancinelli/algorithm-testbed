@@ -7,14 +7,14 @@
 #define THRUST_LAMBDA [=] __host__
 #endif
 
-#include <thrust/host_vector.h>
-#include <thrust/device_vector.h>
 #include <thrust/copy.h>
-#include <thrust/memory.h>
+#include <thrust/device_vector.h>
 #include <thrust/fill.h>
-#include <thrust/sequence.h>
+#include <thrust/host_vector.h>
 #include <thrust/iterator/zip_iterator.h>
+#include <thrust/memory.h>
+#include <thrust/sequence.h>
 #include <thrust/tuple.h>
 
-using thrust::host_vector;
 using thrust::device_vector;
+using thrust::host_vector;

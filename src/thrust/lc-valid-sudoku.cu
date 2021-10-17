@@ -41,7 +41,8 @@ auto isgood(const Board &board) -> bool {
   cudaMemcpy(h_bits.data(), raw_d_bits, nbits, cudaMemcpyDeviceToHost);
 
   const auto m = thrust::reduce(thrust::host, h_bits.begin(), h_bits.end(), -1,
-                                thrust::maximum<int>()) - 1;
+                                thrust::maximum<int>()) -
+                 1;
   return 1 > m;
 }
 

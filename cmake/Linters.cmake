@@ -19,7 +19,7 @@ else()
       clang-format
       COMMENT "Formatting C/C++ code"
       COMMAND
-        "${FIND_EXE} ${PROJECT_SOURCE_DIR}/src ${PROJECT_SOURCE_DIR}/include -name '*.c' -or -name '*.cpp' -or -name '*.h' -or name '*.hpp' -exec ${CLANGFORMAT_EXE} -i {} ';'"
+        ${FIND_EXE} ${PROJECT_SOURCE_DIR}/src ${PROJECT_SOURCE_DIR}/include -name '*.c' -o -name '*.cu' -o -name '*.cpp' -o -name '*.h' -o -name '*.hpp' -exec ${CLANGFORMAT_EXE} -i {} \'\;\'
     )
   endif()
 
@@ -31,8 +31,8 @@ else()
     add_custom_target(
       cmake-format
       COMMENT "Formatting CMake code"
-      COMMAND "${CMAKEFORMAT_EXE} -i ${PROJECT_SOURCE_DIR}/CMakeLists.txt"
-      COMMAND "${FIND_EXE} src include cmake -name CMakeLists.txt -o -name '*.cmake' -exec ${CMAKEFORMAT_EXE} -i ${PROJECT_SOURCE_DIR}/CMakeLists.txt ';'"
+      COMMAND ${CMAKEFORMAT_EXE} -i ${PROJECT_SOURCE_DIR}/CMakeLists.txt
+      COMMAND ${FIND_EXE} src include cmake -name CMakeLists.txt -o -name '*.cmake' -exec ${CMAKEFORMAT_EXE} -i ${PROJECT_SOURCE_DIR}/CMakeLists.txt \'\;\'
     )
   endif()
 endif()

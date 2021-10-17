@@ -1,7 +1,7 @@
 #pragma once
 #include <array>
-#include <vector>
 #include <cmath>
+#include <vector>
 
 #ifdef HAS_CUDA
 #define HOST_DEVICE_ATTRS __host__ __device__
@@ -15,10 +15,14 @@ static constexpr std::size_t shape = 9;
 using Board = std::array<int, shape * shape>;
 
 const auto blksz = static_cast<int>(std::sqrt(shape));
-const auto idx2 = [] HOST_DEVICE_ATTRS (int r, int c) { return (r*shape)+c; };
-const auto idx3 = [] HOST_DEVICE_ATTRS (int r, int c, int t) { return (r*shape+c)*3+t; };
-const auto tl = [] HOST_DEVICE_ATTRS (const int r) { return r-r%blksz; };
-const auto max = [] (int a, int b) { return std::max(a, b); };
+const auto idx2 = [] HOST_DEVICE_ATTRS(int r, int c) {
+  return (r * shape) + c;
+};
+const auto idx3 = [] HOST_DEVICE_ATTRS(int r, int c, int t) {
+  return (r * shape + c) * 3 + t;
+};
+const auto tl = [] HOST_DEVICE_ATTRS(const int r) { return r - r % blksz; };
+const auto max = [](int a, int b) { return std::max(a, b); };
 
 // clang-format off
 

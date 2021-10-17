@@ -73,7 +73,8 @@ auto isgood(const Board &board, MPI_Comm comm) -> bool {
     return false;
 
   const auto m = thrust::reduce(thrust::host, gbits.begin(), gbits.end(), -1,
-                                thrust::maximum<int>()) - 1;
+                                thrust::maximum<int>()) -
+                 1;
   return 1 > m;
 }
 

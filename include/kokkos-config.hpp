@@ -17,9 +17,9 @@ using Device = Kokkos::CudaSpace;
 using Device = Kokkos::HostSpace;
 #endif
 
-using Kokkos::View;
-using Kokkos::parallel_for;
 using Kokkos::create_mirror_view;
 using Kokkos::deep_copy;
-using Kokkos::parallel_scan;
+using Kokkos::parallel_for;
 using Kokkos::parallel_reduce;
+using Kokkos::parallel_scan;
+using Kokkos::View;

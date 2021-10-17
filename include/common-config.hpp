@@ -3,32 +3,30 @@
 
 #include <defines.h>
 
-#include <vector>
-#include <string>
-#include <array>
 #include <algorithm>
-#include <numeric>
-#include <iterator>
+#include <array>
 #include <iostream>
-#include <tuple>
+#include <iterator>
 #include <limits>
+#include <numeric>
+#include <string>
+#include <tuple>
+#include <vector>
 
+using std::array;
+using std::make_pair;
+using std::pair;
 using std::string;
 using std::tuple;
 using std::vector;
-using std::array;
-using std::pair;
-using std::make_pair;
 
-template<typename Container>
-auto print_container(Container& c) {
+template <typename Container> auto print_container(Container &c) {
   std::cout << "⟨ ";
-  std::copy(c.begin(), c.end(),
-            std::ostream_iterator<int>(std::cout, " "));
+  std::copy(c.begin(), c.end(), std::ostream_iterator<int>(std::cout, " "));
   std::cout << "⟩\n";
 }
 
-template<typename Iterator>
+template <typename Iterator>
 auto print_container(Iterator begin, Iterator end) {
   std::cout << "⟨ ";
   while (begin < end)

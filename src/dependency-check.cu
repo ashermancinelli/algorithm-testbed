@@ -1,7 +1,7 @@
 #include <iostream>
 
-#include <cuda.h>
 #include <RAJA/RAJA.hpp>
+#include <cuda.h>
 #include <umpire/Allocator.hpp>
 #include <umpire/ResourceManager.hpp>
 
@@ -19,8 +19,8 @@ int main(int, char **) {
   auto *arr = static_cast<double *>(alloc.allocate(N * sizeof(double)));
 
   std::cout << "Running dependency sanity check.\n";
-  forall<exec_space>(
-      RangeSegment(0, N), [=]__device__(const int i) { arr[i] = 1.; });
+  forall<exec_space>(RangeSegment(0, N),
+                     [=] __device__(const int i) { arr[i] = 1.; });
 
   alloc.deallocate(arr);
   return 0;
