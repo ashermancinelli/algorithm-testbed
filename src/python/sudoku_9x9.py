@@ -53,8 +53,10 @@ bad = [[8, 3, 0,  0, 7, 0,  0, 0, 0],
 def shape():
     return 9
 
+
 def blksz():
     return 3
+
 
 def boards():
     return [good_online, good, bad_online, bad]

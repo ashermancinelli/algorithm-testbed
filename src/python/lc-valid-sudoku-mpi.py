@@ -16,13 +16,15 @@ blksz = sudoku_9x9.blksz()
 
 comm = MPI.COMM_WORLD
 
+
 def solve(board, comm):
     ar = np.zeros((9, 9, 3), dtype=np.int64)
     work = shape * shape
     chunk = (work + comm.size - 1) // comm.size
     subscripts = (*itertools.product(range(9), range(9)),)
-    for i in range(comm.rank * chunk, (comm.rank * chunk)+chunk):
-        if i >= work: break
+    for i in range(comm.rank * chunk, (comm.rank * chunk) + chunk):
+        if i >= work:
+            break
         r, c = subscripts[i]
         v = board[r][c]
         if 0 == v:
@@ -33,7 +35,7 @@ def solve(board, comm):
         by = c // blksz
         bi = bx * blksz + by
         ar[bi][v - 1][2] += 1
-    gar = np.zeros((9*9*3,), dtype=np.int64)
+    gar = np.zeros((9 * 9 * 3,), dtype=np.int64)
     comm.Reduce([ar.flatten(), MPI.INT], [gar, MPI.INT], op=MPI.SUM, root=0)
     comm.Barrier()
     return max(gar.flatten()) < 2 if 0 == comm.rank else False
