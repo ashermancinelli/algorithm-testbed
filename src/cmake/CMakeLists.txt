@@ -1,3 +1,4 @@
+example_str(NAME "lc-valid-sudoku-cmake" ENABLED)
 add_test(
   NAME lc-valid-sudoku-cmake
   COMMAND

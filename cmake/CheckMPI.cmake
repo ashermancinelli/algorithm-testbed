@@ -1,0 +1,17 @@
+
+set(HAS_MPI OFF)
+set(HAS_MPIF OFF)
+add_library(mpi-tpl INTERFACE)
+find_package(MPI QUIET)
+if(MPI_FOUND)
+  message(STATUS "Found MPI")
+  set(HAS_MPI ON)
+  target_link_libraries(mpi-tpl INTERFACE MPI::MPI_CXX)
+  if(MPI_Fortran_FOUND)
+    set(HAS_MPIF ON)
+    target_link_libraries(mpi-tpl INTERFACE MPI::MPI_Fortran)
+  endif()
+else()
+  message(STATUS "No MPI provider could be found. "
+                 "MPI examples will not be built")
+endif()

@@ -9,8 +9,15 @@
 #cmakedefine HAS_THRUST
 #cmakedefine HAS_THRUST_CUDA
 
-#cmakedefine HAS_HOST
+#cmakedefine HAS_FORTRAN
 
 #cmakedefine HAS_RANGEV3
 
+#cmakedefine HAS_OPENMP
+
 #cmakedefine HAS_MPI
+#cmakedefine HAS_MPIF
+
+#cmakedefine HAS_ALGOL68
+
+#cmakedefine HAS_COBOL

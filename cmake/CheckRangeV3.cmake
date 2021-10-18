@@ -1,0 +1,10 @@
+set(HAS_RANGEV3 OFF)
+find_package(range-v3 QUIET)
+if(TARGET range-v3)
+  set(HAS_RANGEV3 ON)
+  add_library(rangev3-tpl INTERFACE)
+  target_link_libraries(rangev3-tpl INTERFACE range-v3 mpi-tpl warnings)
+else()
+  message(STATUS "Could not find range-v3 library. "
+                 "Range v3 examples will not be built.")
+endif()
