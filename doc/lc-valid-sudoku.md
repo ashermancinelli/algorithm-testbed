@@ -2,13 +2,13 @@
 
 ### Problem
 
-[Link to problem.](https://leetcode.com/problems/valid-sudoku/)
+Hello, today we'll be solving a leetcode problem in four programming languages.
+In addition to that, we'll be using various combinations of two programming paradigms common in distributed computing: using a GPU to perform some calculations and MPI to distribute our calculation among multiple processes, potentially on multiple machines.
 
-Our problem is to determine if a 9 x 9 Sudoku board is valid, but not necessarily solvable.
+We'll be looking at [this leetcode problem,](https://leetcode.com/problems/valid-sudoku/) which is to determine if a 9 x 9 Sudoku board is valid, but not necessarily solvable.
+Each row, column, and subbox of the grid must have the digits 1-9.
 
-* Each row must have the digits 1-9 without repetition.
-* Each column must have the digits 1-9.
-* Each of the nine 3 x 3 sub-boxes of the grid must have the digits 1-9.
+Let's jump right in to our BQN solution.
 
 ## Solutions
 
@@ -25,6 +25,7 @@ Order:
 
 ## BQN
 
+This is what our sudoku boards will look like:
 ```
 # two 8s in the first block
 bad ← ⟨8, 3, 0, 0, 7, 0, 0, 0, 0
@@ -48,6 +49,11 @@ good ← ⟨5, 3, 0, 0, 7, 0, 0, 0, 0
         0, 0, 0, 4, 1, 9, 0, 0, 5
         0, 0, 0, 0, 8, 0, 0, 7, 9⟩
 
+```
+
+And here is our full solution.
+This solution will be the basis for all of our later solutions.
+```
 F ← {𝕊𝕩:
   Fl ← 0⊸≠⊸/                       # Filter 0s out
   Dup ← (∨´∾´)¬∘∊¨                 # Are there any duplicates?
@@ -60,12 +66,7 @@ F ← {𝕊𝕩:
 
   (bs ∨ rs ∨ cs)⊑"true"‿"false"
 }
-•Show F good
-•Show F bad
 ```
-
-This solution has been broken down into a few different lines, which is a bit uncommon in BQN solutions since APL folks love to get their solutions into one-liners.
-This solution will also be the basis for our later solutions.
 
 This first line is a function to filter out any 0s:
 ```
@@ -171,12 +172,15 @@ Before we move on to the Python solution, I'd like to talk about our approach to
 
 Just like in the BQN solution, we have three collections which represent the validity of the rows, another for the columns, and a third for the blocks.
 
+Here I have a subset of a sudoku board on the bottom.
+
+![Initial Row, Column, and Block Matrices](./img/lc-valid-sudoku/approach1.png)
+
 In our procedural languages, we'll create an array thrice the size of the grid to hold these values.
+
 Note that this is not as space (or time) efficient as many of the solutions that you can find on the discussion page for the leetcode problem, but it is much easier to parallelize and that's really the point of this video.
 
-Here we have three matrices, one for the rows, columns, and blocks, and below we have our sudoku board.
-
-Let's now start at the second row and first column of our sudoku board for example, which relates to the second row of our "row matrix."
+Let's now walk through a few steps of our algorithm starting at the second row and first column of our sudoku board, which relates to the second row of our "row matrix."
 
 Because we're looking at our row matrix, we'll take the row index in our sudoku board as the row for our row matrix, and we'll take the value in the cell, in this case 6, as the column in our row matrix.
 We'll increment the value at this location in our row matrix, or in the first layer of our 3-d sum matrix that we'll use to get our final answer.
