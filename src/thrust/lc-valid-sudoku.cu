@@ -38,9 +38,7 @@ auto isgood(const Board &board) -> bool {
   setar<<<1, dim3(9, 9)>>>(raw_pointer_cast(d_ar), 
       raw_pointer_cast((thrust::device_vector<int>(board.begin(), board.end())).data()));
   cudaDeviceSynchronize();
-  auto h_ar = host_vector<int>(d_ar, d_ar + (81 * 3));
-  const auto m = thrust::reduce(thrust::host, h_ar.begin(), h_ar.end(), -1,
-                                thrust::maximum<int>());
+  const auto m = thrust::reduce(d_ar, d_ar+(81*3), -1, thrust::maximum<int>());
   device_free(d_ar);
   return m < 2;
 }
