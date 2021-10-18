@@ -17,7 +17,7 @@ endif()
 if("${CMAKE_CUDA_ARCHITECTURES}" STREQUAL "")
   set(CA 60)
   message(STATUS "Defaulting CUDA architectures to ${CA}")
-  set(CMAKE_CUDA_ARCHITECTURES ${CA})
+  set(CMAKE_CUDA_ARCHITECTURES ${CA} CACHE STRING "")
 endif()
 
 # If cuda is enabled in any of the dependencies, we want extended lambda
