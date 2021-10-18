@@ -16,12 +16,12 @@ Order:
 1. BQN
 1. Python
 1. Python & MPI
-1. Fortran
-1. Fortran & MPI
 1. C++
 1. C++ & MPI
 1. C++ & CUDA
 1. C++ & CUDA & MPI
+1. Fortran
+1. Fortran & MPI
 1. CMake
 
 ## BQN
