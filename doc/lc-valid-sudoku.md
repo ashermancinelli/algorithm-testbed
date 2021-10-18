@@ -216,9 +216,7 @@ def solve(board):
             ar[r][v - 1][0] += 1
             ar[c][v - 1][1] += 1
 
-            bx = r // blksz
-            by = c // blksz
-            bi = bx * blksz + by
+            bi = (r // blksz) * blksz + (c // blksz)
             ar[bi][v - 1][2] += 1
     return max(max(i) for j in ar for i in j) < 2
 
@@ -265,11 +263,10 @@ blksz = 3
 comm = MPI.COMM_WORLD
 def solve(board, comm):
     ar = np.zeros((9, 9, 3), dtype=np.int64)
-    work = 9 * 9
-    chunk = (work + comm.size - 1) // comm.size
+    chunk = (81 + comm.size - 1) // comm.size
     subscripts = (*itertools.product(range(9), range(9)),)
     for i in range(comm.rank * chunk, (comm.rank * chunk) + chunk):
-        if i >= work:
+        if i >= 81:
             break
         r, c = subscripts[i]
         v = board[r][c]
@@ -277,9 +274,7 @@ def solve(board, comm):
             continue
         ar[r][v - 1][0] += 1
         ar[c][v - 1][1] += 1
-        bx = r // blksz
-        by = c // blksz
-        bi = bx * blksz + by
+        bi = (r // blksz) * blksz + (c // blksz)
         ar[bi][v - 1][2] += 1
     gar = np.zeros((9 * 9 * 3,), dtype=np.int64)
     comm.Reduce([ar.flatten(), MPI.INT], [gar, MPI.INT], op=MPI.SUM, root=0)
@@ -305,8 +300,7 @@ We'll take advantage of this infrastructure to perform our calculations on multi
 
 Here we chunk our work up based on how many processes we have:
 ```python
-    work = 9 * 9
-    chunk = (work + comm.size - 1) // comm.size
+    chunk = ((9 * 9) + comm.size - 1) // comm.size
 ```
 
 Say we're given 5 processes and we have 81 cells to check (because that's the size of our sudoku board).
@@ -422,7 +416,7 @@ int idx2(int r, int c) {
 Here at the end I find the max value again and check to make sure it's less than two:
 ```cpp
   const auto m = 
-    std::accumulate(ar.begin(), ar.end(), -1, sb::max);
+    std::accumulate(ar.begin(), ar.end(), -1, max);
   return m < 2;
 ```
 
@@ -440,20 +434,16 @@ false
 Here we have our MPI distributed C++ solution:
 ```cpp
 auto isgood(const std::array<int, 81> &board, int rank, int size) -> bool {
-  const auto work = 9 * 9;
-  const auto chunk_size = (work + size - 1) / size;
+  const auto chunk = (81 + size - 1) / size;
   auto ar = std::vector<int>(81 * 3, 0);
-  auto indices =
-      std::vector<std::pair<int, int>>(work * size, std::make_pair(-1, -1));
+  auto indices = std::vector<std::pair<int, int>>(81 * size, std::make_pair(-1, -1));
   for (int r = 0; r < 9; r++)
     for (int c = 0; c < 9; c++)
       indices[idx2(r, c)] = std::make_pair(r, c);
-  for (std::size_t i = chunk_size * rank; i < chunk_size + (chunk_size * rank);
-       i++) {
+  for (std::size_t i = chunk * rank; i < chunk + (chunk * rank); i++) {
     const auto &[r, c] = indices[i];
     const auto v = board[idx2(r, c)];
-    if (r < 0 or 0 == v)
-      continue;
+    if (r < 0 or 0 == v) continue;
     ar[idx3(r, v - 1, 0)] += 1;
     ar[idx3(c, v - 1, 1)] += 1;
     const auto bi = (r / blksz) * blksz + (c / blksz);
@@ -461,7 +451,7 @@ auto isgood(const std::array<int, 81> &board, int rank, int size) -> bool {
   }
   std::vector<int> gar(9 * 9 * 3, 0);
   MPI_Reduce(ar.data(), gar.data(), gar.size(), MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-  return 0 == rank ? std::accumulate(gar.begin(), gar.end(), -1, sb::max) < 2
+  return 0 == rank ? std::accumulate(gar.begin(), gar.end(), -1, std::max) < 2
                    : false;
 }
 ```
@@ -478,15 +468,14 @@ If any viewers know of a nicer way to generate the cartesian product of two cont
 
 The core loop is much the same as our other solutions:
 ```cpp
-  for (std::size_t i = chunk_size * rank; i < chunk_size + (chunk_size * rank);
-       i++) {
+  for (std::size_t i = chunk * rank; i < chunk + (chunk * rank); i++) {
     const auto &[r, c] = indices[i];
     const auto v = board[idx2(r, c)];
     if (r < 0 or 0 == v)
       continue;
     ar[idx3(r, v - 1, 0)] += 1;
     ar[idx3(c, v - 1, 1)] += 1;
-    const auto bi = (r / blksz) * blksz + (c / blksz);
+    const auto bi = (r / 3) * 3 + (c / 3);
     ar[idx3(bi, v - 1, 2)] += 1;
   }
 ```
@@ -518,13 +507,11 @@ int main(int argc, char **argv) {
   MPI_Comm_rank(comm, &rank);
   for (const auto &board : all_boards) {
     bool ret;
-    if (0 == rank)
+    if (0 == rank) {
       ret = isgood(board, rank, size);
-    else
-      isgood(board, rank, size);
-    MPI_Barrier(comm);
-    if (0 == rank)
       std::cout << bool2str(ret) << "\n";
+    } else isgood(board, rank, size);
+    MPI_Barrier(comm);
   }
   MPI_Finalize();
   return 0;
@@ -546,18 +533,7 @@ Here's our single-process CUDA implementation.
 I for the most part am using raw CUDA, but I use a few helper methods from Thrust as well, such as the type-safe device malloc and free and some pointer-casting methods.
 For those that are unfamiliar, the funny-looking function calls with the triple braces are how you launch a raw cuda kernel.
 These allow you to pass arguments to the CUDA runtime to let it know how you'd like your CUDA kernel to be launched.
-```cuda
-__global__ void setar(int *ar, const int *board) {
-  const auto row = threadIdx.x, col = threadIdx.y;
-  const int value = board[idx2(row, col)];
-  if (0 == value) return;
-  atomicAdd(&ar[idx3(row, value, 0)], 1);
-  atomicAdd(&ar[idx3(col, value, 1)], 1);
-  const int bx = row / blksz, by = col / blksz;
-  const int bi = bx * blksz + by;
-  atomicAdd(&ar[idx3(bi, value, 2)], 1);
-}
-
+```cpp
 auto isgood(const Board &board) -> bool {
   auto d_ar = device_malloc<int>(81 * 3);
   setar<<<1, dim3(9, 9)>>>(
@@ -582,7 +558,7 @@ using thrust::raw_pointer_cast;
 Along with the above code that should look pretty familiar at this point, I define two other CUDA kernels.
 The first is this short `setrc` kernel, which sets rows and columns based on the kernel launch parameters I pass.
 This is a shortcut for a cartesian product of the rows and columns.
-```cuda
+```cpp
 __global__ void setrc(int *rows, int *cols) {
   const int r = threadIdx.x, c = threadIdx.y;
   rows[idx2(r, c)] = r;
@@ -591,7 +567,7 @@ __global__ void setrc(int *rows, int *cols) {
 ```
 
 The other kernel is this `setar` function, which is the same core kernel that's been at the heart of all of our solutions so far.
-```cuda
+```cpp
 __global__ void setar(int *ar, const int *board) {
   const auto row = threadIdx.x, col = threadIdx.y;
   const int value = board[idx2(row, col)];
@@ -606,14 +582,14 @@ __global__ void setar(int *ar, const int *board) {
 
 Outside of those two kernels, the solution should look pretty familiar at this point.
 We allocate our final array and pass it to our cuda kernel, along with the sudoku board after copying it to the GPU.
-```cuda
+```cpp
   auto d_ar = device_malloc<int>(81 * 3);
   setar<<<1, dim3(9, 9)>>>(raw_pointer_cast(d_ar), 
       raw_pointer_cast((device_vector<int>(board.begin(), board.end())).data()));
 ```
 
 We then syncronize with our GPU to make sure the kernel finishes before reducing to find the maximum value with `thrust::reduce`, freeing our device memory, and returning whether all values fell below two.
-```cuda
+```cpp
   cudaDeviceSynchronize();
   const auto m = thrust::reduce(d_ar, d_ar+(81*3), -1, thrust::maximum<int>());
   device_free(d_ar);
@@ -626,7 +602,7 @@ Let's move on to probably our most complex example, the C++ CUDA-enabled, MPI-di
 
 Now that we're using two extra paradigms, CUDA GPU device offloadign and MPI distributed computing, our code is looking more noisy.
 It's still pretty much the same solution as our non-distributed CUDA solution though.
-```cuda
+```cpp
 auto isgood(const Board &board, int rank, int size) -> bool {
   const auto chunk = (81 + size - 1) / size;
   const auto rows = device_malloc<int>(chunk * size),
@@ -660,7 +636,7 @@ This time however, we're given this `offset` parameter.
 This is because we're not just running CUDA kernels, we're running CUDA kernels on multiple processes and potentially multiple machines, so we're only performing a subset of the full set of operations.
 This offset parameter tells us where we should start relative to the entire set of operations.
 We're also not using the builtin `threadIdx.y` value since we're launching our kernel in a 1D grid with precalculated row and column indices instead of a 2D grid.
-```cuda
+```cpp
 __global__ void setar(int *ar, const int *board, const int *rows,
                       const int *cols, const int offset) {
   const auto i = offset + threadIdx.x;
@@ -677,7 +653,7 @@ __global__ void setar(int *ar, const int *board, const int *rows,
 
 If we return to the start of our top-level function, you'll see that we calculate the work that should be performed on this MPI process.
 We also set up our row and column indices using our cartesian product kernel.
-```cuda
+```cpp
   const auto chunk = (81 + size - 1) / size;
   const auto rows = device_malloc<int>(chunk * size),
              cols = device_malloc<int>(chunk * size);
@@ -687,13 +663,13 @@ We also set up our row and column indices using our cartesian product kernel.
 ```
 
 We then set up our final sum matrix on the device:
-```cuda
+```cpp
   auto d_ar = device_malloc<int>(81 * 3);
   thrust::fill(d_ar, d_ar + (81 * 3), 0);
 ```
 
 And then launch our core kernel to perform the operations assigned to the current rank:
-```cuda
+```cpp
   setar<<<1, chunk>>>(
       raw_pointer_cast(d_ar),
       raw_pointer_cast((device_vector<int>(board.begin(), board.end())).data()),
@@ -702,7 +678,7 @@ And then launch our core kernel to perform the operations assigned to the curren
 
 We syncronize with our GPU device and copy the data to a host vector before reducing the final sum array across all of our ranks using MPI.
 Note that if we used a GPU-enabled MPI provider we could send the data on the device directly to another system without copying the memory to the host, but this has other complications so I just kept it simple.
-```cuda
+```cpp
   cudaDeviceSynchronize();
   auto h_ar = host_vector<int>(d_ar, d_ar + (81 * 3));
   auto gar = host_vector<int>(81 * 3, 0);
@@ -711,7 +687,7 @@ Note that if we used a GPU-enabled MPI provider we could send the data on the de
 
 And then we perform our final reduction on our root rank to see if we have any cells with values greater than 1.
 We could perform this reduction on the device, but it's probably not worth it to copy the data back to the device for just one operation.
-```cuda
+```cpp
   if (rank > 0)
     return false;
   const auto m = thrust::reduce(thrust::host, gar.begin(), gar.end(), -1,
@@ -810,7 +786,7 @@ subroutine isgood(board, ret)
     row = rows(i)
     col = cols(i)
     v = board(1+idx2(row, col))
-    if (v .eq. 0) return
+    if (v .eq. 0) cycle
     ar(idx3(row, v-1, 0)+1) = ar(idx3(row, v-1, 0)+1) + 1      
     ar(idx3(col, v-1, 1)+1) = ar(idx3(col, v-1, 1)+1) + 1
     ar(idx3(bi(row, col), v-1, 2)+1) = ar(idx3(bi(row, col), v-1, 2)+1) + 1

@@ -70,7 +70,7 @@ subroutine isgood(board, ret)
     row = rows(i)
     col = cols(i)
     v = board(1+idx2(row, col))
-    if (v .eq. 0) return
+    if (v .eq. 0) cycle
     ar(idx3(row, v-1, 0)+1) = ar(idx3(row, v-1, 0)+1) + 1      
     ar(idx3(col, v-1, 1)+1) = ar(idx3(col, v-1, 1)+1) + 1
     ar(idx3(bi(row, col), v-1, 2)+1) = &

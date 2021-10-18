@@ -21,9 +21,7 @@ def solve(board):
             ar[r][v - 1][0] += 1
             ar[c][v - 1][1] += 1
 
-            bx = r // blksz
-            by = c // blksz
-            bi = bx * blksz + by
+            bi = (r//blksz) * blksz + (c//blksz)
             ar[bi][v - 1][2] += 1
     return max(max(i) for j in ar for i in j) < 2
 
