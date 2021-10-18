@@ -671,41 +671,109 @@ false
 false
 ```
 
+Now let's move on to Fortran.
+
 ## Fortran
+
+You're likely not surprised that this looks a lot like our previous solutions.
 
 ```fortran
 subroutine isgood(board, ret)
+  implicit none
   integer, dimension(0:(shape*shape)-1), intent(in) :: board
   logical, intent(out) :: ret
-
-  integer, dimension(0:(shape * shape * 3)-1) :: bits
-  integer :: v, row, col, i, j, dx, dy
-
-  bits = 0
-
+  integer, dimension(0:(shape * shape * 3)-1) :: ar
+  integer :: v, row, col, i, bx, by
+  ar = 0
   do row = 0, shape-1
     do col = 0, shape-1
       v = board(idx2(row, col))
       if (v .eq. 0) cycle
-      j = 0
-      do i = 0, shape-1
-        call pe(bits(idx3(row, col, j)), (v .eq. board(idx2(row, i))))
-      end do
-      j = 1
-      do i = 0, shape-1
-        call pe(bits(idx3(row, col, j)), (v .eq. board(idx2(i, col))))
-      end do
-      j = 2
-      do dx = 0, blksz-1
-        do dy = 0, blksz-1
-          call pe(bits(idx3(row, col, j)), (v .eq. board(idx2(tl(row) + dy, tl(col) + dx))))
-        end do
-      end do
+      ar(idx3(row, v-1, 0)) = ar(idx3(row, v-1, 0)) + 1      
+      ar(idx3(col, v-1, 1)) = ar(idx3(col, v-1, 1)) + 1
+      ar(idx3(bi(row, col), v-1, 2)) = ar(idx3(bi(row, col), v-1, 2)) + 1
     end do
   end do
-  
-  v = maxval(bits) - 1
-
+  v = maxval(ar) - 1
   ret = (v .lt. 1)
-end subroutine
+end subroutine isgood
+```
+
+If I clear away the declarations and initialization, this looks like a fairly readable solution.
+You may notice that I have to repeat myself a few times because there's not a really nice way to incremenet a value in fortran.
+I read a bit about the `iso_fortran_env` which contains an `atomic_add`, but there seems to be some constraints on the types you can use, which is a bit annoying.
+```fortran
+subroutine isgood(board, ret)
+  do row = 0, shape-1
+    do col = 0, shape-1
+      v = board(idx2(row, col))
+      if (v .eq. 0) cycle
+      ar(idx3(row, v-1, 0)) = ar(idx3(row, v-1, 0)) + 1      
+      ar(idx3(col, v-1, 1)) = ar(idx3(col, v-1, 1)) + 1
+      ar(idx3(bi(row, col), v-1, 2)) = ar(idx3(bi(row, col), v-1, 2)) + 1
+    end do
+  end do
+  v = maxval(ar) - 1
+  ret = (v .lt. 1)
+end subroutine isgood
+```
+
+Now moving on to the Fortran implementation that uses MPI.
+
+## Fortran & MPI
+
+Here is the full solution.
+```fortran
+subroutine isgood(board, ret)
+  use mpi
+  implicit none
+  integer, dimension(shape*shape), intent(in) :: board
+  logical, intent(out) :: ret
+  integer, dimension(shape * shape * 3) :: ar, gar
+  integer, dimension(shape * shape) :: rows, cols
+  integer :: v, row, col, i, chunk, rank, size, ierr
+
+  ar = 0
+  gar = 0
+
+  call MPI_Comm_rank(MPI_COMM_WORLD, rank, ierr)
+  call MPI_Comm_size(MPI_COMM_WORLD, size, ierr)
+
+  do row = 0, shape-1
+    do col = 0, shape-1
+      rows(1+idx2(row, col)) = row
+      cols(1+idx2(row, col)) = col
+    end do
+  end do
+
+  chunk = ((shape*shape) + size - 1) / size
+
+  do i = 1+(rank*chunk), (rank*chunk)+chunk
+    if (i .gt. (shape*shape)) exit
+    row = rows(i)
+    col = cols(i)
+    v = board(1+idx2(row, col))
+    if (v .eq. 0) return
+    ar(idx3(row, v-1, 0)+1) = ar(idx3(row, v-1, 0)+1) + 1      
+    ar(idx3(col, v-1, 1)+1) = ar(idx3(col, v-1, 1)+1) + 1
+    ar(idx3(bi(row, col), v-1, 2)+1) = &
+      ar(idx3(bi(row, col), v-1, 2)+1) + 1
+  end do
+  
+  call MPI_Reduce(ar, gar, 3*shape*shape, &
+    MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD, ierr)
+  call MPI_Barrier(MPI_COMM_WORLD, ierr)
+
+  if (0 .eq. rank) then
+    v = maxval(gar) - 1
+    ret = (v .lt. 1)
+  else
+    ret = .false.
+  end if
+
+end subroutine isgood
+```
+
+Let's trim away the declarations and initializations again:
+```fortran
 ```
