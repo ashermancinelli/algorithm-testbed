@@ -1,12 +1,7 @@
 ## Documentation
 
-This directory contains documentation for example problems used in the repo.
-See the following subdirectories for more:
+This directory contains documentation for example problems used in the repo and stubs for future blog posts at ashermancinelli.com.
 
-* [Thrust](./thrust/README.md)
-* [BQN (APL dialect)](./bqn/README.md)
-* [kokkos](./kokkos/README.md)
-* [raja](./raja/README.md)
-* [host](./host/README.md)
-* [cuda](./cuda/README.md)
-* [AMD hip](./amdhip/README.md)
+* [Sudoku Board Validator](./lc-valid-sudoku.md)
+* [Longest Valid Parens](./lc-longest-valid-parens.md)
+* [Array Programming](./array-programming.md)

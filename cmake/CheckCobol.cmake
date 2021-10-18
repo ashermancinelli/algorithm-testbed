@@ -6,6 +6,7 @@ if(${COBC_EXE} STREQUAL "COBC_EXE-NOTFOUND")
     "Cobol examples will not be built.")
 else()
   set(HAS_COBOL ON)
+  message(STATUS "Found Cobol compiler: ${COBC_EXE}")
 endif()
 
 macro(add_cobol_executable)

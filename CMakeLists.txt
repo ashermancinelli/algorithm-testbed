@@ -15,6 +15,8 @@ include(cmake/CheckRangeV3.cmake)
 include(cmake/CheckPython.cmake)
 include(cmake/CheckThrust.cmake)
 include(cmake/CheckCobol.cmake)
+include(cmake/CheckScheme.cmake)
+include(cmake/CheckFreeBASIC.cmake)
 
 add_subdirectory(include)
 
