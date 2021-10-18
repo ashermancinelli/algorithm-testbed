@@ -1,9 +1,17 @@
 #include "sudoku-9x9.hpp"
 #include <thrust-config.hpp>
 #include <thrust/extrema.h>
+#include <thrust/device_free.h>
+#include <thrust/device_malloc.h>
 
 using sudoku_boards::Board;
 using sudoku_boards::shape;
+
+using thrust::device_malloc;
+using thrust::device_free;
+using thrust::device_vector;
+using thrust::host_vector;
+using thrust::raw_pointer_cast;
 
 __constant__ int blksz;
 
@@ -11,39 +19,30 @@ __device__ int idx2(int r, int c) { return (r * shape) + c; }
 __device__ int idx3(int r, int c, int t) { return (r * shape + c) * 3 + t; }
 __device__ int tl(int r) { return r - r % blksz; }
 
-__global__ void setbits(int *bits, const int *board) {
+__global__ void setar(int *ar, const int *board) {
   const auto row = threadIdx.x, col = threadIdx.y;
   const int value = board[idx2(row, col)];
   if (0 == value)
     return;
-  atomicAdd(&bits[idx3(row, value, 0)], 1);
-  atomicAdd(&bits[idx3(col, value, 1)], 1);
+  atomicAdd(&ar[idx3(row, value, 0)], 1);
+  atomicAdd(&ar[idx3(col, value, 1)], 1);
 
   const int bx = row / blksz, by = col / blksz;
   const int bi = bx * blksz + by;
-  atomicAdd(&bits[idx3(bi, value, 2)], 1);
+  atomicAdd(&ar[idx3(bi, value, 2)], 1);
 }
 
 // https://leetcode.com/problems/valid-sudoku/discuss/1487300/C%2B%2B-EASY-TO-UNDERSTAND
 auto isgood(const Board &board) -> bool {
-
-  const auto h_board = thrust::host_vector<int>(board.begin(), board.end());
-  const auto d_board = thrust::device_vector<int>(h_board);
-
-  static constexpr int nbits = shape * shape * 3;
-  int *raw_d_bits;
-  cudaMalloc(&raw_d_bits, sizeof(int) * nbits);
-
-  dim3 tpb(9, 9);
-  setbits<<<1, tpb>>>(raw_d_bits, thrust::raw_pointer_cast(d_board.data()));
+  auto d_ar = device_malloc<int>(81 * 3);
+  setar<<<1, dim3(9, 9)>>>(raw_pointer_cast(d_ar), 
+      raw_pointer_cast((thrust::device_vector<int>(board.begin(), board.end())).data()));
   cudaDeviceSynchronize();
-  auto h_bits = host_vector<int>(nbits, 0);
-  cudaMemcpy(h_bits.data(), raw_d_bits, nbits, cudaMemcpyDeviceToHost);
-
-  const auto m = thrust::reduce(thrust::host, h_bits.begin(), h_bits.end(), -1,
-                                thrust::maximum<int>()) -
-                 1;
-  return 1 > m;
+  auto h_ar = host_vector<int>(d_ar, d_ar + (81 * 3));
+  const auto m = thrust::reduce(thrust::host, h_ar.begin(), h_ar.end(), -1,
+                                thrust::maximum<int>());
+  device_free(d_ar);
+  return m < 2;
 }
 
 int main(int argc, char **argv) {
