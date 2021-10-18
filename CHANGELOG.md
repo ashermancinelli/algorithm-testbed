@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Linting targets for python, cmake, and C/C++
 - Python examples
+- CMake examples
 
 ## [v0.2.1] - 10-16-2021
 
