@@ -1,4 +1,6 @@
-#include <host-config.hpp>
+#include <common-config.hpp>
+#include <range/v3/all.hpp>
+using namespace ranges;
 
 int main() {
   static constexpr auto size=9, work=81;

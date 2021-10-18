@@ -560,12 +560,11 @@ __global__ void setar(int *ar, const int *board) {
 
 auto isgood(const Board &board) -> bool {
   auto d_ar = device_malloc<int>(81 * 3);
-  setar<<<1, dim3(9, 9)>>>(raw_pointer_cast(d_ar), 
+  setar<<<1, dim3(9, 9)>>>(
+      raw_pointer_cast(d_ar), 
       raw_pointer_cast((thrust::device_vector<int>(board.begin(), board.end())).data()));
   cudaDeviceSynchronize();
-  auto h_ar = host_vector<int>(d_ar, d_ar + (81 * 3));
-  const auto m = thrust::reduce(thrust::host, h_ar.begin(), h_ar.end(), -1,
-                                thrust::maximum<int>());
+  const auto m = thrust::reduce(d_ar, d_ar+(81*3), -1, thrust::maximum<int>());
   device_free(d_ar);
   return m < 2;
 }
@@ -613,15 +612,15 @@ We allocate our final array and pass it to our cuda kernel, along with the sudok
       raw_pointer_cast((device_vector<int>(board.begin(), board.end())).data()));
 ```
 
-We then syncronize with our GPU to make sure the kernel finishes before copying it back to the host to performWHY AM I DOING THIS 
+We then syncronize with our GPU to make sure the kernel finishes before reducing to find the maximum value with `thrust::reduce`, freeing our device memory, and returning whether all values fell below two.
 ```cuda
   cudaDeviceSynchronize();
-  auto h_ar = host_vector<int>(d_ar, d_ar + (81 * 3));
-  const auto m = thrust::reduce(thrust::host, h_ar.begin(), h_ar.end(), -1,
-                                thrust::maximum<int>());
+  const auto m = thrust::reduce(d_ar, d_ar+(81*3), -1, thrust::maximum<int>());
   device_free(d_ar);
   return m < 2;
 ```
+
+Let's move on to probably our most complex example, the C++ CUDA-enabled, MPI-distributed implementation.
 
 ## C++ & CUDA & MPI
 
@@ -701,19 +700,17 @@ And then launch our core kernel to perform the operations assigned to the curren
       raw_pointer_cast(rows), raw_pointer_cast(cols), chunk * rank);
 ```
 
-We syncronize with our GPU device and copy the data to a host vector:
+We syncronize with our GPU device and copy the data to a host vector before reducing the final sum array across all of our ranks using MPI.
+Note that if we used a GPU-enabled MPI provider we could send the data on the device directly to another system without copying the memory to the host, but this has other complications so I just kept it simple.
 ```cuda
   cudaDeviceSynchronize();
   auto h_ar = host_vector<int>(d_ar, d_ar + (81 * 3));
-```
-
-Finally we reduce the final sum array across all of our ranks using MPI:
-```cpp
   auto gar = host_vector<int>(81 * 3, 0);
   MPI_Reduce(h_ar.data(), gar.data(), gar.size(), MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 ```
 
-And then perform our final reduction on our root rank to see if we have any cells with values greater than 1:
+And then we perform our final reduction on our root rank to see if we have any cells with values greater than 1.
+We could perform this reduction on the device, but it's probably not worth it to copy the data back to the device for just one operation.
 ```cuda
   if (rank > 0)
     return false;
@@ -759,9 +756,9 @@ subroutine isgood(board, ret)
 end subroutine isgood
 ```
 
-If I clear away the declarations and initialization, this looks like a fairly readable solution.
+If I clear away the declarations and initializations, this looks like a fairly readable solution.
 You may notice that I have to repeat myself a few times because there's not a really nice way to incremenet a value in fortran.
-I read a bit about the `iso_fortran_env` which contains an `atomic_add`, but there seems to be some constraints on the types you can use, which is a bit annoying.
+I read a bit about the `iso_fortran_env` which contains an `atomic_add`, but there seems to be some constraints on the types you can use, which is a bit annoying so I just did it the hard way.
 ```fortran
 subroutine isgood(board, ret)
   do row = 0, shape-1
@@ -778,7 +775,7 @@ subroutine isgood(board, ret)
 end subroutine isgood
 ```
 
-Now moving on to the Fortran implementation that uses MPI.
+Now we move on to the MPI-distributed Fortran implementation.
 
 ## Fortran & MPI
 
@@ -816,12 +813,10 @@ subroutine isgood(board, ret)
     if (v .eq. 0) return
     ar(idx3(row, v-1, 0)+1) = ar(idx3(row, v-1, 0)+1) + 1      
     ar(idx3(col, v-1, 1)+1) = ar(idx3(col, v-1, 1)+1) + 1
-    ar(idx3(bi(row, col), v-1, 2)+1) = &
-      ar(idx3(bi(row, col), v-1, 2)+1) + 1
+    ar(idx3(bi(row, col), v-1, 2)+1) = ar(idx3(bi(row, col), v-1, 2)+1) + 1
   end do
   
-  call MPI_Reduce(ar, gar, 3*shape*shape, &
-    MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD, ierr)
+  call MPI_Reduce(ar, gar, 3*shape*shape, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD, ierr)
   call MPI_Barrier(MPI_COMM_WORLD, ierr)
 
   if (0 .eq. rank) then
@@ -836,4 +831,81 @@ end subroutine isgood
 
 Let's trim away the declarations and initializations again:
 ```fortran
+subroutine isgood(board, ret)
+  do row = 0, 8
+    do col = 0, 8
+      rows(1+idx2(row, col)) = row
+      cols(1+idx2(row, col)) = col
+    end do
+  end do
+  chunk = (81 + size - 1) / size
+  do i = 1+(rank*chunk), (rank*chunk)+chunk
+    if (i .gt. 81) exit
+    row = rows(i)
+    col = cols(i)
+    v = board(1+idx2(row, col))
+    if (v .eq. 0) return
+    ar(idx3(row, v-1, 0)+1) = ar(idx3(row, v-1, 0)+1) + 1      
+    ar(idx3(col, v-1, 1)+1) = ar(idx3(col, v-1, 1)+1) + 1
+    ar(idx3(bi(row, col), v-1, 2)+1) = ar(idx3(bi(row, col), v-1, 2)+1) + 1
+  end do
+  call MPI_Reduce(ar, gar, 3*81, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD, ierr)
+  call MPI_Barrier(MPI_COMM_WORLD, ierr)
+  if (0 .eq. rank) then
+    v = maxval(gar) - 1
+    ret = (v .lt. 1)
+  else
+    ret = .false.
+  end if
+end subroutine isgood
+```
+
+You'll notice that I create row and column vectors again because this makes distributing the processes much simpler.
+```fortran
+  do row = 0, 8
+    do col = 0, 8
+      rows(1+idx2(row, col)) = row
+      cols(1+idx2(row, col)) = col
+    end do
+  end do
+```
+
+The core loop is the same as the other solutions.
+```fortran
+  do i = 1+(rank*chunk), (rank*chunk)+chunk
+    if (i .gt. 81) exit
+    row = rows(i)
+    col = cols(i)
+    v = board(1+idx2(row, col))
+    if (v .eq. 0) return
+    ar(idx3(row, v-1, 0)+1) = ar(idx3(row, v-1, 0)+1) + 1      
+    ar(idx3(col, v-1, 1)+1) = ar(idx3(col, v-1, 1)+1) + 1
+    ar(idx3(bi(row, col), v-1, 2)+1) = ar(idx3(bi(row, col), v-1, 2)+1) + 1
+  end do
+```
+
+We reduce the solution across all of our ranks to get the full array on rank 0.
+```fortran
+  call MPI_Reduce(ar, gar, 3*81, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD, ierr)
+  call MPI_Barrier(MPI_COMM_WORLD, ierr)
+```
+
+We then perform our max reduce to get our answer and we return!
+```fortran
+  if (0 .eq. rank) then
+    v = maxval(gar)
+    ret = (v .lt. 2)
+  else
+    ret = .false.
+  end if
+```
+
+Running this gives us the answers we expect.
+```console
+$ mpirun -n 7 ./src/fortran/lc-valid-sudoku-ftn-mpi
+ Running with world size of           7
+ T
+ T
+ F
+ F
 ```
