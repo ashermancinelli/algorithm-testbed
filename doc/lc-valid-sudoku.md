@@ -22,7 +22,6 @@ Order:
 1. C++ & CUDA & MPI
 1. Fortran
 1. Fortran & MPI
-1. CMake
 
 ## BQN
 
@@ -543,15 +542,94 @@ false
 
 ## C++ & CUDA
 
-Now that we're using two extra paradigms, CUDA GPU device offloadign and MPI distributed computing, our code is looking more noisy.
-It's still pretty much the same solution as before though.
-
-You'll notice that I'm using raw cuda kernels here, the funny-looking function calls with the triple braces.
+Here's our single-process CUDA implementation.
+I for the most part am using raw CUDA, but I use a few helper methods from Thrust as well, such as the type-safe device malloc and free and some pointer-casting methods.
+For those that are unfamiliar, the funny-looking function calls with the triple braces are how you launch a raw cuda kernel.
 These allow you to pass arguments to the CUDA runtime to let it know how you'd like your CUDA kernel to be launched.
 ```cuda
-auto isgood(const std::array<int,81> &board, int rank, int size) -> bool {
-  const auto work = 81;
-  const auto chunk = (work + size - 1) / size;
+__global__ void setar(int *ar, const int *board) {
+  const auto row = threadIdx.x, col = threadIdx.y;
+  const int value = board[idx2(row, col)];
+  if (0 == value) return;
+  atomicAdd(&ar[idx3(row, value, 0)], 1);
+  atomicAdd(&ar[idx3(col, value, 1)], 1);
+  const int bx = row / blksz, by = col / blksz;
+  const int bi = bx * blksz + by;
+  atomicAdd(&ar[idx3(bi, value, 2)], 1);
+}
+
+auto isgood(const Board &board) -> bool {
+  auto d_ar = device_malloc<int>(81 * 3);
+  setar<<<1, dim3(9, 9)>>>(raw_pointer_cast(d_ar), 
+      raw_pointer_cast((thrust::device_vector<int>(board.begin(), board.end())).data()));
+  cudaDeviceSynchronize();
+  auto h_ar = host_vector<int>(d_ar, d_ar + (81 * 3));
+  const auto m = thrust::reduce(thrust::host, h_ar.begin(), h_ar.end(), -1,
+                                thrust::maximum<int>());
+  device_free(d_ar);
+  return m < 2;
+}
+```
+
+I have the following `using` statements to make the code a little more readable hopefully.
+```cpp
+using thrust::device_malloc;
+using thrust::device_free;
+using thrust::device_vector;
+using thrust::host_vector;
+using thrust::raw_pointer_cast;
+```
+
+Along with the above code that should look pretty familiar at this point, I define two other CUDA kernels.
+The first is this short `setrc` kernel, which sets rows and columns based on the kernel launch parameters I pass.
+This is a shortcut for a cartesian product of the rows and columns.
+```cuda
+__global__ void setrc(int *rows, int *cols) {
+  const int r = threadIdx.x, c = threadIdx.y;
+  rows[idx2(r, c)] = r;
+  cols[idx2(r, c)] = c;
+}
+```
+
+The other kernel is this `setar` function, which is the same core kernel that's been at the heart of all of our solutions so far.
+```cuda
+__global__ void setar(int *ar, const int *board) {
+  const auto row = threadIdx.x, col = threadIdx.y;
+  const int value = board[idx2(row, col)];
+  if (0 == value) return;
+  atomicAdd(&ar[idx3(row, value, 0)], 1);
+  atomicAdd(&ar[idx3(col, value, 1)], 1);
+  const int bx = row / blksz, by = col / blksz;
+  const int bi = bx * blksz + by;
+  atomicAdd(&ar[idx3(bi, value, 2)], 1);
+}
+```
+
+Outside of those two kernels, the solution should look pretty familiar at this point.
+We allocate our final array and pass it to our cuda kernel, along with the sudoku board after copying it to the GPU.
+```cuda
+  auto d_ar = device_malloc<int>(81 * 3);
+  setar<<<1, dim3(9, 9)>>>(raw_pointer_cast(d_ar), 
+      raw_pointer_cast((device_vector<int>(board.begin(), board.end())).data()));
+```
+
+We then syncronize with our GPU to make sure the kernel finishes before copying it back to the host to performWHY AM I DOING THIS 
+```cuda
+  cudaDeviceSynchronize();
+  auto h_ar = host_vector<int>(d_ar, d_ar + (81 * 3));
+  const auto m = thrust::reduce(thrust::host, h_ar.begin(), h_ar.end(), -1,
+                                thrust::maximum<int>());
+  device_free(d_ar);
+  return m < 2;
+```
+
+## C++ & CUDA & MPI
+
+Now that we're using two extra paradigms, CUDA GPU device offloadign and MPI distributed computing, our code is looking more noisy.
+It's still pretty much the same solution as our non-distributed CUDA solution though.
+```cuda
+auto isgood(const Board &board, int rank, int size) -> bool {
+  const auto chunk = (81 + size - 1) / size;
   const auto rows = device_malloc<int>(chunk * size),
              cols = device_malloc<int>(chunk * size);
   thrust::fill(rows, rows + (chunk * size), -1);
@@ -568,6 +646,7 @@ auto isgood(const std::array<int,81> &board, int rank, int size) -> bool {
   auto gar = host_vector<int>(81 * 3, 0);
   MPI_Reduce(h_ar.data(), gar.data(), gar.size(), MPI_INT, MPI_SUM, 0,
              MPI_COMM_WORLD);
+  device_free(rows); device_free(cols); device_free(d_ar);
   if (rank > 0)
     return false;
   const auto m = thrust::reduce(thrust::host, gar.begin(), gar.end(), -1,
@@ -576,30 +655,12 @@ auto isgood(const std::array<int,81> &board, int rank, int size) -> bool {
 }
 ```
 
-I have the following `using` statements to make the code a little more readable hopefully.
-```cpp
-using thrust::device_malloc;
-using thrust::device_vector;
-using thrust::host_vector;
-using thrust::raw_pointer_cast;
-```
-
-Along with the above code that should look pretty familiar at this point, I define two other CUDA kernels.
-The first is this short `setrc` function, which sets rows and columns based on the kernel launch parameters I pass.
-This is a shortcut for a cartesian product of the rows and columns.
-```cuda
-__global__ void setrc(int *rows, int *cols) {
-  const int r = threadIdx.x, c = threadIdx.y;
-  rows[idx2(r, c)] = r;
-  cols[idx2(r, c)] = c;
-}
-```
-
-The other kernel is this `setar` function, which is the same core kernel that's been at the heart of all of our solutions so far.
+The `setar` kernel is a bit different from our non distributed CUDA solution since we're only operating on a subset of our sudoku board.
 We set the values in our final sum matrix for the row, column and block submatrices just like before.
 This time however, we're given this `offset` parameter.
 This is because we're not just running CUDA kernels, we're running CUDA kernels on multiple processes and potentially multiple machines, so we're only performing a subset of the full set of operations.
 This offset parameter tells us where we should start relative to the entire set of operations.
+We're also not using the builtin `threadIdx.y` value since we're launching our kernel in a 1D grid with precalculated row and column indices instead of a 2D grid.
 ```cuda
 __global__ void setar(int *ar, const int *board, const int *rows,
                       const int *cols, const int offset) {
@@ -618,8 +679,7 @@ __global__ void setar(int *ar, const int *board, const int *rows,
 If we return to the start of our top-level function, you'll see that we calculate the work that should be performed on this MPI process.
 We also set up our row and column indices using our cartesian product kernel.
 ```cuda
-  const auto work = 81;
-  const auto chunk = (work + size - 1) / size;
+  const auto chunk = (81 + size - 1) / size;
   const auto rows = device_malloc<int>(chunk * size),
              cols = device_malloc<int>(chunk * size);
   thrust::fill(rows, rows + (chunk * size), -1);
