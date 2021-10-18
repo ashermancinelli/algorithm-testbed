@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Linting targets for python, cmake, and C/C++
 - Python examples
 - CMake examples
+- Cobol infrastructure
+
+### Changed
+
+- Broke top-level CMake script into many smaller scripts
 
 ## [v0.2.1] - 10-16-2021
 
