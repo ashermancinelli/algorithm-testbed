@@ -266,7 +266,7 @@ blksz = 3
 comm = MPI.COMM_WORLD
 def solve(board, comm):
     ar = np.zeros((9, 9, 3), dtype=np.int64)
-    work = shape * shape
+    work = 9 * 9
     chunk = (work + comm.size - 1) // comm.size
     subscripts = (*itertools.product(range(9), range(9)),)
     for i in range(comm.rank * chunk, (comm.rank * chunk) + chunk):
@@ -306,7 +306,7 @@ We'll take advantage of this infrastructure to perform our calculations on multi
 
 Here we chunk our work up based on how many processes we have:
 ```python
-    work = shape * shape
+    work = 9 * 9
     chunk = (work + comm.size - 1) // comm.size
 ```
 
@@ -369,6 +369,306 @@ True
 True
 False
 False
+```
+
+## C++
+
+All of our C++ solutions will use a board like this:
+```cpp
+const auto board = std::array<int, 81>{
+  5, 3, 0,  0, 7, 0,  0, 0, 0,
+  6, 0, 0,  1, 9, 5,  0, 0, 0,
+  0, 9, 8,  0, 0, 0,  0, 6, 0,
+  
+  8, 0, 0,  0, 6, 0,  0, 0, 3,
+  4, 0, 0,  8, 0, 3,  0, 0, 1,
+  7, 0, 0,  0, 2, 0,  0, 0, 6,
+  
+  0, 6, 0,  0, 0, 0,  2, 8, 0,
+  0, 0, 0,  4, 1, 9,  0, 0, 5,
+  0, 0, 0,  0, 8, 0,  0, 7, 9
+};
+```
+
+Here's our serial C++ solution.
+```cpp
+auto isgood(const std::array<int, 81> &board) -> bool {
+  auto ar = std::vector<int>(9 * 9 * 3, 0);
+  for (int r = 0; r < 9; r++)
+    for (int c = 0; c < 9; c++) {
+      const auto v = board[idx2(r, c)];
+      if (0 == v)
+        continue;
+      ar[idx3(r, v - 1, 0)] += 1;
+      ar[idx3(c, v - 1, 1)] += 1;
+      const auto bi = (r / blksz) * blksz + (c / blksz);
+      ar[idx3(bi, v - 1, 2)] += 1;
+    }
+  const auto m =
+    std::accumulate(ar.begin(), ar.end(), -1, max);
+  return m < 2;
+}
+```
+
+You can see pretty much everything about our solution is the same so far.
+You may notice the `idx2` and `idx3` functions - these just calculate the linear index from subscripts so we can almost use 2d and 3d subscripts while keeping our arrays totally linear.
+
+Here's our `idx2` function for example. I'll be using these functions for the rest of my solutoins since they make the code much more readable.
+```cpp
+int idx2(int r, int c) {
+  return (r * 9) + c;
+};
+```
+
+Here at the end I find the max value again and check to make sure it's less than two:
+```cpp
+  const auto m = 
+    std::accumulate(ar.begin(), ar.end(), -1, sb::max);
+  return m < 2;
+```
+
+Running our executable gives us the same answers as our previous implementations:
+```console
+$ ./src/cpp/lc-valid-sudoku
+true
+true
+false
+false
+```
+
+## C++ & MPI
+
+Here we have our MPI distributed C++ solution:
+```cpp
+auto isgood(const std::array<int, 81> &board, int rank, int size) -> bool {
+  const auto work = 9 * 9;
+  const auto chunk_size = (work + size - 1) / size;
+  auto ar = std::vector<int>(81 * 3, 0);
+  auto indices =
+      std::vector<std::pair<int, int>>(work * size, std::make_pair(-1, -1));
+  for (int r = 0; r < 9; r++)
+    for (int c = 0; c < 9; c++)
+      indices[idx2(r, c)] = std::make_pair(r, c);
+  for (std::size_t i = chunk_size * rank; i < chunk_size + (chunk_size * rank);
+       i++) {
+    const auto &[r, c] = indices[i];
+    const auto v = board[idx2(r, c)];
+    if (r < 0 or 0 == v)
+      continue;
+    ar[idx3(r, v - 1, 0)] += 1;
+    ar[idx3(c, v - 1, 1)] += 1;
+    const auto bi = (r / blksz) * blksz + (c / blksz);
+    ar[idx3(bi, v - 1, 2)] += 1;
+  }
+  std::vector<int> gar(9 * 9 * 3, 0);
+  MPI_Reduce(ar.data(), gar.data(), gar.size(), MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+  return 0 == rank ? std::accumulate(gar.begin(), gar.end(), -1, sb::max) < 2
+                   : false;
+}
+```
+
+All the setup is the same between the last several solutions.
+
+Astute viewers may recognize this as equivilant to a cartesian product, but I couldn't find a nice way to do this with the STL algorithms.
+If any viewers know of a nicer way to generate the cartesian product of two containers, please let me know.
+```cpp
+  for (int r = 0; r < 9; r++)
+    for (int c = 0; c < 9; c++)
+      indices[idx2(r, c)] = std::make_pair(r, c);
+```
+
+The core loop is much the same as our other solutions:
+```cpp
+  for (std::size_t i = chunk_size * rank; i < chunk_size + (chunk_size * rank);
+       i++) {
+    const auto &[r, c] = indices[i];
+    const auto v = board[idx2(r, c)];
+    if (r < 0 or 0 == v)
+      continue;
+    ar[idx3(r, v - 1, 0)] += 1;
+    ar[idx3(c, v - 1, 1)] += 1;
+    const auto bi = (r / blksz) * blksz + (c / blksz);
+    ar[idx3(bi, v - 1, 2)] += 1;
+  }
+```
+
+This section is exactly equivilant to the following Python version.
+This gives you an idea of what it's like to use the raw C and Fortran interfaces to MPI.
+```cpp
+  std::vector<int> gar(9 * 9 * 3, 0);
+  MPI_Reduce(ar.data(), gar.data(), gar.size(), MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+  return 0 == rank ? std::accumulate(gar.begin(), gar.end(), -1, sb::max) < 2
+                   : false;
+```
+
+Python version:
+```python
+    gar = np.zeros((9 * 9 * 3,), dtype=np.int64)
+    comm.Reduce([ar.flatten(), MPI.INT], [gar, MPI.INT], op=MPI.SUM, root=0)
+    comm.Barrier()
+    return max(gar.flatten()) < 2 if 0 == comm.rank else False
+```
+
+In my main routine I iterate over our boards and use some extra logic so we only see the results that rank 0 gave back:
+```cpp
+int main(int argc, char **argv) {
+  int size, rank;
+  MPI_Init(&argc, &argv);
+  MPI_Comm comm = MPI_COMM_WORLD;
+  MPI_Comm_size(comm, &size);
+  MPI_Comm_rank(comm, &rank);
+  for (const auto &board : all_boards) {
+    bool ret;
+    if (0 == rank)
+      ret = isgood(board, rank, size);
+    else
+      isgood(board, rank, size);
+    MPI_Barrier(comm);
+    if (0 == rank)
+      std::cout << bool2str(ret) << "\n";
+  }
+  MPI_Finalize();
+  return 0;
+}
+```
+
+Running this works just as all our previous solutions did:
+```console
+$ mpirun -n 5 ./src/cpp/lc-valid-sudoku-mpi
+true
+true
+false
+false
+```
+
+## C++ & CUDA
+
+Now that we're using two extra paradigms, CUDA GPU device offloadign and MPI distributed computing, our code is looking more noisy.
+It's still pretty much the same solution as before though.
+
+You'll notice that I'm using raw cuda kernels here, the funny-looking function calls with the triple braces.
+These allow you to pass arguments to the CUDA runtime to let it know how you'd like your CUDA kernel to be launched.
+```cuda
+auto isgood(const std::array<int,81> &board, int rank, int size) -> bool {
+  const auto work = 81;
+  const auto chunk = (work + size - 1) / size;
+  const auto rows = device_malloc<int>(chunk * size),
+             cols = device_malloc<int>(chunk * size);
+  thrust::fill(rows, rows + (chunk * size), -1);
+  thrust::fill(cols, cols + (chunk * size), -1);
+  setrc<<<1, dim3(9, 9)>>>(raw_pointer_cast(rows), raw_pointer_cast(cols));
+  auto d_ar = device_malloc<int>(81 * 3);
+  thrust::fill(d_ar, d_ar + (81 * 3), 0);
+  setar<<<1, chunk>>>(
+      raw_pointer_cast(d_ar),
+      raw_pointer_cast((device_vector<int>(board.begin(), board.end())).data()),
+      raw_pointer_cast(rows), raw_pointer_cast(cols), chunk * rank);
+  cudaDeviceSynchronize();
+  auto h_ar = host_vector<int>(d_ar, d_ar + (81 * 3));
+  auto gar = host_vector<int>(81 * 3, 0);
+  MPI_Reduce(h_ar.data(), gar.data(), gar.size(), MPI_INT, MPI_SUM, 0,
+             MPI_COMM_WORLD);
+  if (rank > 0)
+    return false;
+  const auto m = thrust::reduce(thrust::host, gar.begin(), gar.end(), -1,
+                                thrust::maximum<int>());
+  return m < 2;
+}
+```
+
+I have the following `using` statements to make the code a little more readable hopefully.
+```cpp
+using thrust::device_malloc;
+using thrust::device_vector;
+using thrust::host_vector;
+using thrust::raw_pointer_cast;
+```
+
+Along with the above code that should look pretty familiar at this point, I define two other CUDA kernels.
+The first is this short `setrc` function, which sets rows and columns based on the kernel launch parameters I pass.
+This is a shortcut for a cartesian product of the rows and columns.
+```cuda
+__global__ void setrc(int *rows, int *cols) {
+  const int r = threadIdx.x, c = threadIdx.y;
+  rows[idx2(r, c)] = r;
+  cols[idx2(r, c)] = c;
+}
+```
+
+The other kernel is this `setar` function, which is the same core kernel that's been at the heart of all of our solutions so far.
+We set the values in our final sum matrix for the row, column and block submatrices just like before.
+This time however, we're given this `offset` parameter.
+This is because we're not just running CUDA kernels, we're running CUDA kernels on multiple processes and potentially multiple machines, so we're only performing a subset of the full set of operations.
+This offset parameter tells us where we should start relative to the entire set of operations.
+```cuda
+__global__ void setar(int *ar, const int *board, const int *rows,
+                      const int *cols, const int offset) {
+  const auto i = offset + threadIdx.x;
+  const int r = rows[i], c = cols[i];
+  const int value = board[idx2(r, c)];
+  if (r < 0 || 0 == value)
+    return;
+  atomicAdd(&ar[idx3(r, value, 0)], 1);
+  atomicAdd(&ar[idx3(c, value, 1)], 1);
+  const int bi = (r / blksz) * blksz + (c / blksz);
+  atomicAdd(&ar[idx3(bi, value, 2)], 1);
+}
+```
+
+If we return to the start of our top-level function, you'll see that we calculate the work that should be performed on this MPI process.
+We also set up our row and column indices using our cartesian product kernel.
+```cuda
+  const auto work = 81;
+  const auto chunk = (work + size - 1) / size;
+  const auto rows = device_malloc<int>(chunk * size),
+             cols = device_malloc<int>(chunk * size);
+  thrust::fill(rows, rows + (chunk * size), -1);
+  thrust::fill(cols, cols + (chunk * size), -1);
+  setrc<<<1, dim3(9, 9)>>>(raw_pointer_cast(rows), raw_pointer_cast(cols));
+```
+
+We then set up our final sum matrix on the device:
+```cuda
+  auto d_ar = device_malloc<int>(81 * 3);
+  thrust::fill(d_ar, d_ar + (81 * 3), 0);
+```
+
+And then launch our core kernel to perform the operations assigned to the current rank:
+```cuda
+  setar<<<1, chunk>>>(
+      raw_pointer_cast(d_ar),
+      raw_pointer_cast((device_vector<int>(board.begin(), board.end())).data()),
+      raw_pointer_cast(rows), raw_pointer_cast(cols), chunk * rank);
+```
+
+We syncronize with our GPU device and copy the data to a host vector:
+```cuda
+  cudaDeviceSynchronize();
+  auto h_ar = host_vector<int>(d_ar, d_ar + (81 * 3));
+```
+
+Finally we reduce the final sum array across all of our ranks using MPI:
+```cpp
+  auto gar = host_vector<int>(81 * 3, 0);
+  MPI_Reduce(h_ar.data(), gar.data(), gar.size(), MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+```
+
+And then perform our final reduction on our root rank to see if we have any cells with values greater than 1:
+```cuda
+  if (rank > 0)
+    return false;
+  const auto m = thrust::reduce(thrust::host, gar.begin(), gar.end(), -1,
+                                thrust::maximum<int>());
+  return m < 2;
+```
+
+And there we have it, our sudoku validator is running on multiple processes and using a GPU.
+```console
+$ mpirun -n 7 ./src/thrust/lc-valid-sudoku-mpi-thrust
+true
+true
+false
+false
 ```
 
 ## Fortran
