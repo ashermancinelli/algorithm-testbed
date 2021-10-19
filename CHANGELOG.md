@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added 
+
+- ASM targets
+
+### Changed
+
+- Cleaned up the example infrastructure to better support custom targets like ASM and COBOL
+
 ## [v0.2.2] 10-18-2021
 
 ### Added
