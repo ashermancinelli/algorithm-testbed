@@ -15,7 +15,12 @@ add_example(NAME "lc-valid-sudoku-ftn-mpi"
   SRC lc-valid-sudoku-mpi.F90 sudoku-utils.F90
   )
 
-if(HAS_FORTRAN AND HAS_MPI AND HAS_MPIF)
+add_example(NAME "lc-peak-element-ftn"
+  DEPENDS_ON HAS_FORTRAN
+  SRC lc-peak-element.f
+  )
+
+if(HAS_MPI AND HAS_MPIF)
   foreach(nproc 2 4 6 8)
     add_test(
       NAME "test-${nproc}proc-lc-valid-sudoku-ftn-mpi"
