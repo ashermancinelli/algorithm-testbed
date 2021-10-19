@@ -926,4 +926,6 @@ We solve a Leetcode problem in four languages using various combinations of MPI 
 13:55 Fortran & MPI Solution
 14:38 Conclusion
 
-Written version:
+Written version: http://www.ashermancinelli.com/leetcode-distributed-computing
+LinkedIn: https://www.linkedin.com/in/asher-mancinelli-bb4a56144/
+GitHub Repo for Examples: https://github.com/ashermancinelli/algorithm-testbed
