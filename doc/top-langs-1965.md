@@ -28,5 +28,20 @@ We have to find the peak element that is greater than both neighbors.
 ### [BASIC (FreeBASIC)](#content)
 ### [Assembler (x86)](#content)
 ### [ALGOL (Algol68 Genie)](#content)
+
+```algol
+PROC solve = ([]INT elements)INT: (
+  INT found := -1;
+  FOR i FROM 1+(LWB elements) TO (UPB elements)-1
+  DO
+    IF elements[i] > elements[i+1] AND elements[i] > elements[i-1]
+      THEN
+        found := i-1
+      FI
+  OD;
+  found 
+);
+```
+
 ### [COBOL (GNU Cobol)](#content)
 ### [Fortran (F77)](#content)

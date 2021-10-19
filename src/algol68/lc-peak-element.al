@@ -1,7 +1,3 @@
-COMMENT
-this is a multiline comment
-COMMENT
-
 PROC solve = ([]INT elements)INT: (
   INT found := -1;
   FOR i FROM 1+(LWB elements) TO (UPB elements)-1
