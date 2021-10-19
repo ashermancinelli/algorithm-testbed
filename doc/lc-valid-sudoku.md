@@ -908,3 +908,22 @@ $ mpirun -n 7 ./src/fortran/lc-valid-sudoku-ftn-mpi
 ## Conclusion
 
 I hope you've all enjoyed this video and the foray into distributed computing in a few different programming languages.
+
+## YouTube Description
+
+We solve a Leetcode problem in four languages using various combinations of MPI and CUDA!
+
+0:00 Problem Introduction
+0:36 BQN Solution
+2:07 Solution Strategy
+4:54 Python Solution
+5:42 Python & MPI Solution
+8:01 C++ Solution
+8:55 C++ & MPI Solution
+9:58 C++ & CUDA Solution
+11:24 C++ & MPI & CUDA Solution
+13:31 Fortran Solution
+13:55 Fortran & MPI Solution
+14:38 Conclusion
+
+Written version:
