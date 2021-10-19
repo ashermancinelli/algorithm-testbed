@@ -185,17 +185,25 @@ Let's now walk through a few steps of our algorithm starting at the second row a
 Because we're looking at our row matrix, we'll take the row index in our sudoku board as the row for our row matrix, and we'll take the value in the cell, in this case 6, as the column in our row matrix.
 We'll increment the value at this location in our row matrix, or in the first layer of our 3-d sum matrix that we'll use to get our final answer.
 
+![Checking Rows](./img/lc-valid-sudoku/approach2.png)
+
 Let's move on to check the first row and second column of our sudoku board for our column matrix.
 Because we're looking at our column matrix, or the second layer of our final sum array, we'll use the column index as the row index in our column matrix, and the value in that cell for the column index in our column matrix.
 
 We'll increment the value at this location in our column matrix, or in the second layer of our 3-d sum matrix that we'll use to get our final answer.
 
+![Checking Columns](./img/lc-valid-sudoku/approach3.png)
+
 Finally, let's look at the first block in our sudoku board, which corresponds to the first row in our block matrix, and let's look at the first cell in that block.
 The value in the first cell in the first block is 8, so we'll increment the first row and eighth column in our block matrix.
+
+![Checking Blocks](./img/lc-valid-sudoku/approach4.png)
 
 If we then perform these three operations for every cell in the sudoku board, we'll have a final matrix that indicates all the row-column-block-value combinations that we have, and if any cell in that final matrix has a value greater than one, then our board is invalid.
 
 If we were then to check the final cell in the first block of our board, we would find that the eighth element of the first row of our block matrix would be incremented again, which would mean we have an invalid board!
+
+![Checking Last Element of Block](./img/lc-valid-sudoku/approach5.png)
 
 If any value in our final array is greater than one, then we know we have at least one duplicate in at least one row, column, or block.
 
@@ -223,10 +231,6 @@ def solve(board):
             bi = (r // blksz) * blksz + (c // blksz)
             ar[bi][v - 1][2] += 1
     return max(max(i) for j in ar for i in j) < 2
-
-if __name__ == "__main__":
-    for b in sudoku_9x9.boards():
-        print(solve(b))
 ```
 
 You can see here that we increment the value in the first layer of our full 3D matrix according to the row and the value in the cell currently being examined:
@@ -247,6 +251,13 @@ And finally for our block matrix, it just takes a little bit of math to figure o
             ar[bi][v - 1][2] += 1
 ```
 
+I use this main function to run the python solution:
+```python
+if __name__ == "__main__":
+    for b in sudoku_9x9.boards():
+        print(solve(b))
+```
+
 We run our example with two valid boards and two invalid boards and get the answers we expect:
 ```console
 $ python ./src/python/lc-valid-sudoku.py
@@ -258,7 +269,11 @@ False
 
 ## Python & MPI
 
-Now we'll look at another python example, but this time one that uses MPI to distribute the calculations:
+Now we'll look at another python example, but this time one that uses MPI to distribute the calculations.
+
+MPI provides a lot of infrastructure for distributed computing: using the `mpirun` command spawns N processes, each of which knows how many processes were spawned, what its unique process ID is, and some other relevant information.
+These processes may be spawned on multiple machines even, and MPI gives us the tools to communicate between these processes.
+We'll take advantage of this infrastructure to perform our calculations on multiple processes.
 ```python
 import numpy as np
 from mpi4py import MPI
@@ -284,7 +299,10 @@ def solve(board, comm):
     comm.Reduce([ar.flatten(), MPI.INT], [gar, MPI.INT], op=MPI.SUM, root=0)
     comm.Barrier()
     return max(gar.flatten()) < 2 if 0 == comm.rank else False
+```
 
+This is what the setup looks like to get an MPI program running.
+```python
 if __name__ == "__main__":
     if 0 == comm.rank:
         print("Running with size {0}".format(comm.size))
@@ -298,10 +316,6 @@ if __name__ == "__main__":
             solve(b, comm)
 ```
 
-MPI provides a lot of infrastructure for distributed computing: using the `mpirun` command spawns N processes, each of which knows how many processes were spawned, what its unique process ID is, and some other relevant information.
-These processes may be spawned on multiple machines even, and MPI gives us the tools to communicate between these processes.
-We'll take advantage of this infrastructure to perform our calculations on multiple processes.
-
 Here we chunk our work up based on how many processes we have:
 ```python
     chunk = ((9 * 9) + comm.size - 1) // comm.size
@@ -309,6 +323,10 @@ Here we chunk our work up based on how many processes we have:
 
 Say we're given 5 processes and we have 81 cells to check (because that's the size of our sudoku board).
 The calculation would look something like this:
+
+`chunk` is then the smallest amount of work for each process such that all the work that needs to be done is performed.
+This is a common calculation that needs to be done in parallel computing.
+Note that our final process may exit early if the work is not evenly divisible by the chunk size.
 ```console
 >>> work = 81
 >>> size = 5
@@ -318,10 +336,6 @@ The calculation would look something like this:
 >>> chunk * size
 85
 ```
-
-`chunk` is then the smallest amount of work for each process such that all the work that needs to be done is performed.
-This is a common calculation that needs to be done in parallel computing.
-Our final process may exit early if the work is not evenly divisible by the chunk size.
 
 We then generate all the possible combinations of rows and columns, and iterate over only the elements that fall within the chunk of work that belongs to our current MPI process.
 ```python
@@ -339,9 +353,7 @@ The rest of this code is exactly the same as our serial implementation:
             continue
         ar[r][v - 1][0] += 1
         ar[c][v - 1][1] += 1
-        bx = r // blksz
-        by = c // blksz
-        bi = bx * blksz + by
+        bi = (r // blksz) * blksz + (c // blksz)
         ar[bi][v - 1][2] += 1
 ```
 
@@ -367,6 +379,8 @@ True
 False
 False
 ```
+
+Now let's move on to all our C++ solutions.
 
 ## C++
 
@@ -435,7 +449,7 @@ false
 
 ## C++ & MPI
 
-Here we have our MPI distributed C++ solution:
+Here we have our MPI distributed C++ solution, let's walk through it in a few steps.
 ```cpp
 auto isgood(const std::array<int, 81> &board, int rank, int size) -> bool {
   const auto chunk = (81 + size - 1) / size;
@@ -462,7 +476,7 @@ auto isgood(const std::array<int, 81> &board, int rank, int size) -> bool {
 
 All the setup is the same between the last several solutions.
 
-Astute viewers may recognize this as equivilant to a cartesian product, but I couldn't find a nice way to do this with the STL algorithms.
+Astute viewers may recognize this as a cartesian product, but I couldn't find a nice way to do this with the STL algorithms.
 If any viewers know of a nicer way to generate the cartesian product of two containers, please let me know.
 ```cpp
   for (int r = 0; r < 9; r++)
@@ -470,7 +484,7 @@ If any viewers know of a nicer way to generate the cartesian product of two cont
       indices[idx2(r, c)] = std::make_pair(r, c);
 ```
 
-The core loop is much the same as our other solutions:
+The core loop is much the same as our other solutions, aside from unpacking the row and column as a tuple.
 ```cpp
   for (std::size_t i = chunk * rank; i < chunk + (chunk * rank); i++) {
     const auto &[r, c] = indices[i];
@@ -484,8 +498,8 @@ The core loop is much the same as our other solutions:
   }
 ```
 
-This section is exactly equivilant to the following Python version.
-This gives you an idea of what it's like to use the raw C and Fortran interfaces to MPI.
+This section is exactly equivilant to the Python version below.
+This should give you an idea of what it's like to use the raw C and Fortran interfaces to MPI.
 ```cpp
   std::vector<int> gar(9 * 9 * 3, 0);
   MPI_Reduce(ar.data(), gar.data(), gar.size(), MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
@@ -501,7 +515,7 @@ Python version:
     return max(gar.flatten()) < 2 if 0 == comm.rank else False
 ```
 
-In my main routine I iterate over our boards and use some extra logic so we only see the results that rank 0 gave back:
+In my main function I iterate over the same boards and use some extra logic so we only see the results that rank 0 gave back:
 ```cpp
 int main(int argc, char **argv) {
   int size, rank;
@@ -531,6 +545,8 @@ false
 false
 ```
 
+We'll now take a look at our CUDA-enabled solution.
+
 ## C++ & CUDA
 
 Here's our single-process CUDA implementation.
@@ -559,9 +575,9 @@ using thrust::host_vector;
 using thrust::raw_pointer_cast;
 ```
 
-Along with the above code that should look pretty familiar at this point, I define two other CUDA kernels.
+Along with the previous code that should look pretty familiar at this point, I define two other CUDA kernels.
 The first is this short `setrc` kernel, which sets rows and columns based on the kernel launch parameters I pass.
-This is a shortcut for a cartesian product of the rows and columns.
+This is a shortcut for a cartesian product of the rows and columns that runs on the GPU.
 ```cpp
 __global__ void setrc(int *rows, int *cols) {
   const int r = threadIdx.x, c = threadIdx.y;
@@ -578,8 +594,7 @@ __global__ void setar(int *ar, const int *board) {
   if (0 == value) return;
   atomicAdd(&ar[idx3(row, value, 0)], 1);
   atomicAdd(&ar[idx3(col, value, 1)], 1);
-  const int bx = row / blksz, by = col / blksz;
-  const int bi = bx * blksz + by;
+  const int bi = (row / blksz) * blksz + (col / blksz);
   atomicAdd(&ar[idx3(bi, value, 2)], 1);
 }
 ```
@@ -588,8 +603,12 @@ Outside of those two kernels, the solution should look pretty familiar at this p
 We allocate our final array and pass it to our cuda kernel, along with the sudoku board after copying it to the GPU.
 ```cpp
   auto d_ar = device_malloc<int>(81 * 3);
-  setar<<<1, dim3(9, 9)>>>(raw_pointer_cast(d_ar), 
-      raw_pointer_cast((device_vector<int>(board.begin(), board.end())).data()));
+  setar<<<1, dim3(9, 9)>>>(
+    raw_pointer_cast(d_ar),
+    raw_pointer_cast(
+      (device_vector<int>(board.begin(), board.end())).data()
+    )
+  );
 ```
 
 We then syncronize with our GPU to make sure the kernel finishes before reducing to find the maximum value with `thrust::reduce`, freeing our device memory, and returning whether all values fell below two.
@@ -600,11 +619,11 @@ We then syncronize with our GPU to make sure the kernel finishes before reducing
   return m < 2;
 ```
 
-Let's move on to probably our most complex example, the C++ CUDA-enabled, MPI-distributed implementation.
+Let's move on to our most complex example, the C++ CUDA-enabled, MPI-distributed implementation.
 
 ## C++ & CUDA & MPI
 
-Now that we're using two extra paradigms, CUDA GPU device offloadign and MPI distributed computing, our code is looking more noisy.
+Now that we're using two extra paradigms, CUDA GPU device offloading and MPI distributed computing, our code is looking more noisy.
 It's still pretty much the same solution as our non-distributed CUDA solution though.
 ```cpp
 auto isgood(const Board &board, int rank, int size) -> bool {
@@ -612,7 +631,6 @@ auto isgood(const Board &board, int rank, int size) -> bool {
   const auto rows = device_malloc<int>(chunk * size),
              cols = device_malloc<int>(chunk * size);
   thrust::fill(rows, rows + (chunk * size), -1);
-  thrust::fill(cols, cols + (chunk * size), -1);
   setrc<<<1, dim3(9, 9)>>>(raw_pointer_cast(rows), raw_pointer_cast(cols));
   auto d_ar = device_malloc<int>(81 * 3);
   thrust::fill(d_ar, d_ar + (81 * 3), 0);
@@ -662,7 +680,6 @@ We also set up our row and column indices using our cartesian product kernel.
   const auto rows = device_malloc<int>(chunk * size),
              cols = device_malloc<int>(chunk * size);
   thrust::fill(rows, rows + (chunk * size), -1);
-  thrust::fill(cols, cols + (chunk * size), -1);
   setrc<<<1, dim3(9, 9)>>>(raw_pointer_cast(rows), raw_pointer_cast(cols));
 ```
 
@@ -681,7 +698,7 @@ And then launch our core kernel to perform the operations assigned to the curren
 ```
 
 We syncronize with our GPU device and copy the data to a host vector before reducing the final sum array across all of our ranks using MPI.
-Note that if we used a GPU-enabled MPI provider we could send the data on the device directly to another system without copying the memory to the host, but this has other complications so I just kept it simple.
+Note that if we used a GPU-enabled MPI provider we could send the data on the device directly to another system's GPU without copying the memory to the host, but this has other complications so I kept it simple for this example.
 ```cpp
   cudaDeviceSynchronize();
   auto h_ar = host_vector<int>(d_ar, d_ar + (81 * 3));
@@ -699,7 +716,7 @@ We could perform this reduction on the device, but it's probably not worth it to
   return m < 2;
 ```
 
-And there we have it, our sudoku validator is running on multiple processes and using a GPU.
+And there we have it, our sudoku validator is running on multiple processes and using GPUs.
 ```console
 $ mpirun -n 7 ./src/thrust/lc-valid-sudoku-mpi-thrust
 true
@@ -736,9 +753,8 @@ subroutine isgood(board, ret)
 end subroutine isgood
 ```
 
-If I clear away the declarations and initializations, this looks like a fairly readable solution.
+If I clear away the declarations and initializations, this looks fairly readable.
 You may notice that I have to repeat myself a few times because there's not a really nice way to incremenet a value in fortran.
-I read a bit about the `iso_fortran_env` which contains an `atomic_add`, but there seems to be some constraints on the types you can use, which is a bit annoying so I just did it the hard way.
 ```fortran
 subroutine isgood(board, ret)
   do row = 0, shape-1
@@ -756,6 +772,7 @@ end subroutine isgood
 ```
 
 Now we move on to the MPI-distributed Fortran implementation.
+This solution is pretty long so I'll break the function into a few slides like a sliding window.
 
 ## Fortran & MPI
 
@@ -840,7 +857,7 @@ subroutine isgood(board, ret)
 end subroutine isgood
 ```
 
-You'll notice that I create row and column vectors again because this makes distributing the processes much simpler.
+You'll notice that I create row and column arrays again because this makes distributing the processes much simpler.
 ```fortran
   do row = 0, 8
     do col = 0, 8
@@ -850,7 +867,8 @@ You'll notice that I create row and column vectors again because this makes dist
   end do
 ```
 
-The core loop is the same as the other solutions.
+The core loop is the same as the other distributed solutions.
+I work only on the rows and columns assigned to the current rank.
 ```fortran
   do i = 1+(rank*chunk), (rank*chunk)+chunk
     if (i .gt. 81) exit
@@ -865,13 +883,10 @@ The core loop is the same as the other solutions.
 ```
 
 We reduce the solution across all of our ranks to get the full array on rank 0.
+We then perform our max reduce to get our answer and we return!
 ```fortran
   call MPI_Reduce(ar, gar, 3*81, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD, ierr)
   call MPI_Barrier(MPI_COMM_WORLD, ierr)
-```
-
-We then perform our max reduce to get our answer and we return!
-```fortran
   if (0 .eq. rank) then
     v = maxval(gar)
     ret = (v .lt. 2)
@@ -889,3 +904,7 @@ $ mpirun -n 7 ./src/fortran/lc-valid-sudoku-ftn-mpi
  F
  F
 ```
+
+## Conclusion
+
+I hope you've all enjoyed this video and the foray into distributed computing in a few different programming languages.
