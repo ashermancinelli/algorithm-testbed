@@ -1,4 +1,5 @@
 add_subdirectory(algol68)
+add_subdirectory(asm)
 add_subdirectory(raja)
 add_subdirectory(cpp)
 add_subdirectory(fortran)

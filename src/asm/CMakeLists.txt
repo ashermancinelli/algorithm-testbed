@@ -1,0 +1,16 @@
+add_example(
+  NAME "asm-dep-check"
+  SOURCES test.s
+  DEPENDS HAS_ASM
+)
+add_example(
+  NAME "asm-echo"
+  SOURCES echo.s
+  DEPENDS HAS_ASM
+)
+add_example(
+  NAME "lc-peak-element-asm"
+  TYPE ASM
+  SOURCES lc-peak-element.c lc-peak-element.s
+  DEPENDS HAS_ASM
+)

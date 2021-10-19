@@ -1,10 +1,10 @@
 add_example(NAME "kokkos-dependency-check"
-  DEPENDS_ON HAS_KOKKOS
-  SRC kokkos-dependency-check.cpp
+  DEPENDS HAS_KOKKOS
+  SOURCES kokkos-dependency-check.cpp
   LINK_LIBRARIES kokkos-tpl
   )
 add_example(NAME "dice-histogram"
-  DEPENDS_ON HAS_KOKKOS
-  SRC dice-histogram
+  DEPENDS HAS_KOKKOS
+  SOURCES dice-histogram
   LINK_LIBRARIES kokkos-tpl
   )

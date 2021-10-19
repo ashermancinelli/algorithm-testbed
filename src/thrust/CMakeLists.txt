@@ -1,16 +1,16 @@
 add_example(NAME "lc-valid-sudoku-thrust"
-  DEPENDS_ON HAS_THRUST
-  SRC lc-valid-sudoku.cu
+  DEPENDS HAS_THRUST
+  SOURCES lc-valid-sudoku.cu
   LINK_LIBRARIES thrust-tpl
   )
 add_example(NAME "lc-valid-sudoku-mpi-thrust"
-  DEPENDS_ON HAS_THRUST HAS_MPI
-  SRC lc-valid-sudoku-mpi.cu
+  DEPENDS HAS_THRUST HAS_MPI
+  SOURCES lc-valid-sudoku-mpi.cu
   LINK_LIBRARIES thrust-tpl mpi-tpl
   )
 add_example(NAME "lc-longest-valid-parens"
-  DEPENDS_ON HAS_THRUST
-  SRC lc-longest-valid-parens.cu
+  DEPENDS HAS_THRUST
+  SOURCES lc-longest-valid-parens.cu
   LINK_LIBRARIES thrust-tpl
   )
 

@@ -1,3 +1,5 @@
+include(cmake/AddAsmExample.cmake)
+include(cmake/AddCOBOLExample.cmake)
 
 macro(example_str)
   set(OPTIONS ENABLED)
@@ -16,10 +18,36 @@ macro(example_str)
   endif()
 endmacro()
 
+macro(add_special_example)
+  set(OPTIONS )
+  set(SVARGS NAME TYPE)
+  set(MVARGS SOURCES)
+  cmake_parse_arguments(ADD_SPECIAL_EXAMPLE
+    "${OPTIONS}"
+    "${SVARGS}"
+    "${MVARGS}"
+    ${ARGN}
+    )
+  if("${ADD_SPECIAL_EXAMPLE_TYPE}" STREQUAL "ASM")
+    add_asm_example(
+      NAME ${ADD_SPECIAL_EXAMPLE_NAME}
+      SOURCES ${ADD_SPECIAL_EXAMPLE_SOURCES}
+      )
+  elseif("${ADD_SPECIAL_EXAMPLE_TYPE}" STREQUAL "COBOL")
+    add_cobol_example(
+      NAME ${ADD_SPECIAL_EXAMPLE_NAME}
+      SOURCES ${ADD_SPECIAL_EXAMPLE_SOURCES}
+      )
+  else()
+    message(FATAL_ERROR "Tried to add special example \"${ADD_SPECIAL_EXAMPLE_NAME}\","
+      " but there is no available example of type \"${ADD_SPECIAL_EXAMPLE_TYPE}\"!")
+  endif()
+endmacro()
+
 macro(add_example)
   set(OPTIONS)
-  set(SVARGS NAME)
-  set(MVARGS DEPENDS_ON SRC LINK_LIBRARIES)
+  set(SVARGS NAME TYPE)
+  set(MVARGS DEPENDS SOURCES LINK_LIBRARIES)
   cmake_parse_arguments(ADD_EXAMPLE
     "${OPTIONS}"
     "${SVARGS}"
@@ -27,7 +55,7 @@ macro(add_example)
     ${ARGN}
     )
   set(EVALSTR "if(1")
-  foreach(D ${ADD_EXAMPLE_DEPENDS_ON})
+  foreach(D ${ADD_EXAMPLE_DEPENDS})
     set(EVALSTR "${EVALSTR} AND ${D}")
   endforeach()
   set(EVALSTR "${EVALSTR})
@@ -42,16 +70,25 @@ macro(add_example)
       NAME ${ADD_EXAMPLE_NAME}
       ENABLED
       )
-    add_executable(${ADD_EXAMPLE_NAME} ${ADD_EXAMPLE_SRC})
-    target_link_libraries(${ADD_EXAMPLE_NAME}
-      PUBLIC
-      ${ADD_EXAMPLE_LINK_LIBRARIES}
-      )
-    install(TARGETS ${ADD_EXAMPLE_NAME} RUNTIME DESTINATION bin)
-    add_test(
-      NAME "test-${ADD_EXAMPLE_NAME}"
-      COMMAND $<TARGET_FILE:${ADD_EXAMPLE_NAME}>
-      )
+    if(DEFINED ADD_EXAMPLE_TYPE)
+      add_special_example(
+        NAME ${ADD_EXAMPLE_NAME}
+        TYPE ${ADD_EXAMPLE_TYPE}
+        SOURCES ${ADD_EXAMPLE_SOURCES}
+        )
+    else()
+      add_executable(${ADD_EXAMPLE_NAME} ${ADD_EXAMPLE_SOURCES})
+      target_link_libraries(${ADD_EXAMPLE_NAME}
+        PUBLIC
+        ${ADD_EXAMPLE_LINK_LIBRARIES}
+        )
+      install(TARGETS ${ADD_EXAMPLE_NAME} RUNTIME DESTINATION bin)
+      add_test(
+        NAME "test-${ADD_EXAMPLE_NAME}"
+        COMMAND $<TARGET_FILE:${ADD_EXAMPLE_NAME}>
+        )
+    endif()
+
   else()
     example_str(NAME ${ADD_EXAMPLE_NAME})
   endif()

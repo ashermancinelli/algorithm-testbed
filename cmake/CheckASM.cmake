@@ -1,0 +1,11 @@
+include(CheckLanguage)
+check_language(ASM)
+set(HAS_ASM OFF)
+if(CMAKE_ASM_COMPILER)
+  set(HAS_ASM ON)
+  enable_language(ASM)
+  message(STATUS "Found ASM compiler: ${CMAKE_ASM_COMPILER}")
+else()
+  message(STATUS "Could not find ASM compiler. "
+    "Assembly examples will not be built.")
+endif()

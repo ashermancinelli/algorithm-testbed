@@ -1,12 +1,13 @@
 cmake_minimum_required(VERSION 3.18)
 
-project(portable-alg-testbed CXX)
+project(portable-alg-testbed CXX C)
 
 include(cmake/GlobalVars.cmake)
 include(cmake/Linters.cmake)
 
 include(cmake/CheckAlgol68.cmake)
 include(cmake/CheckFortran.cmake)
+include(cmake/CheckASM.cmake)
 include(cmake/CheckMPI.cmake)
 include(cmake/CheckOpenMP.cmake)
 include(cmake/CheckRAJA.cmake)
