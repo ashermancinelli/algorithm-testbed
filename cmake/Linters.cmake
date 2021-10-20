@@ -44,6 +44,7 @@ macro(add_format_target)
     )
 
     string(REPLACE "\n" ";" ALL_FILES "${ALL_FILES}")
+    list(FILTER ALL_FILES EXCLUDE REGEX "\\.sh")
     list(FILTER ALL_FILES INCLUDE REGEX "${ADD_FORMAT_TARGET_REGEX}")
 
     if(EXISTS "${PROJECT_BINARY_DIR}/${ADD_FORMAT_TARGET_NAME}.bash")
