@@ -1,9 +1,9 @@
 ## Algorithm Testbed
 
 Implementations of programming problems, usually leveraging GPUs or distributed computing.
-[See the `doc` directory for more.](./doc/README.md)
-[See CHANGELOG for version information and history.](./CHANGELOG.md)
-[See CONTRIBUTING for information on contributing and developing.](./CONTRIBUTING.md)
+* [See the `doc` directory for more.](./doc/README.md)
+* [See CHANGELOG for version information and history.](./CHANGELOG.md)
+* [See CONTRIBUTING for information on contributing and developing.](./CONTRIBUTING.md)
 
 ## Installation
 
