@@ -2,89 +2,131 @@ set(HAS_FIND OFF)
 set(HAS_CLANGFORMAT OFF)
 set(HAS_CMAKEFORMAT OFF)
 
-find_program(FIND_EXE "find")
-find_program(CLANGFORMAT_EXE "clang-format")
-find_program(CMAKEFORMAT_EXE "cmake-format")
-find_program(PY_FORMAT "black")
-find_program(FTN_FORMAT "fprettify")
+find_package(UnixCommands REQUIRED)
+find_program(GIT_EXE "git" CACHE PATH "")
+find_program(CLANGFORMAT_EXE "clang-format" CACHE PATH "")
+find_program(CMAKEFORMAT_EXE "cmake-format" CACHE PATH "")
+find_program(PY_FORMAT "black" CACHE PATH "")
+find_program(FTN_FORMAT "fprettify" CACHE PATH "")
 
-if(${FIND_EXE} STREQUAL "FIND_EXE-NOTFOUND")
-  message(STATUS "Find command could not be found. "
-                 "No linting targets will be made available.")
-else()
+message(
+  STATUS
+    "Found executables for formatting:
+ *  Git: ${GIT_EXE}
+ *  Clang format: ${CLANGFORMAT_EXE}
+ *  Cmake format: ${CMAKEFORMAT_EXE}
+ *  Python formatter: ${PY_FORMAT}
+ *  Fortran formatter: ${FTN_FORMAT}"
+)
 
-  set(ALL_FORMAT_TARGETS )
+add_custom_target(format)
 
-  if(${CLANGFORMAT_EXE} STREQUAL "CLANGFORMAT_EXE-NOTFOUND")
-    message(STATUS "clang-format command could not be found. "
-                   "No clang-format target will be made available.")
-  else()
-    list(APPEND ALL_FORMAT_TARGETS clang-format)
-    message(STATUS "Adding target 'clang-format'")
-    add_custom_target(
-      clang-format
-      COMMENT "Formatting C/C++ code"
-      COMMAND
-        ${FIND_EXE} src include -name '*.c' -o -name '*.cu' -o -name '*.cpp' -o -name '*.h' -o -name '*.hpp' -exec ${CLANGFORMAT_EXE} -i {} \'\;\'
-      WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-    )
-  endif()
-
-  if(${CMAKEFORMAT_EXE} STREQUAL "CMAKEFORMAT_EXE-NOTFOUND")
-    message(STATUS "cmake-format command could not be found. "
-      "No cmake-format target will be made available.")
-  else()
-    list(APPEND ALL_FORMAT_TARGETS cmake-format)
-    message(STATUS "Adding target 'cmake-format'")
-    add_custom_target(
-      cmake-format
-      COMMENT "Formatting CMake code"
-      COMMAND ${CMAKEFORMAT_EXE} -i ${PROJECT_SOURCE_DIR}/CMakeLists.txt
-      COMMAND ${FIND_EXE} src include cmake -name CMakeLists.txt -o -name '*.cmake' -exec ${CMAKEFORMAT_EXE} -i CMakeLists.txt \'\;\'
-      WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-    )
-  endif()
-
-  if(${PY_FORMAT} STREQUAL "PY_FORMAT-NOTFOUND")
-    message(STATUS "No 'black' executable could be found. "
-      "Python formatting target will not be created.")
-  else()
-    list(APPEND ALL_FORMAT_TARGETS py-format)
-    message(STATUS "Adding target 'py-format'")
-    add_custom_target(
-      py-format
-      COMMENT "Formatting Python code"
-      COMMAND ${FIND_EXE} src -name '*.py' -exec ${PY_FORMAT} {} \'\;\'
-      WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-    )
-  endif()
-
-  if("${FTN_FORMAT}" STREQUAL "FTN_FORMAT-NOTFOUND")
-    message(STATUS "No 'fprettify' executable could be found. "
-      "Fortran formatting target will not be created.")
-  else()
-    list(APPEND ALL_FORMAT_TARGETS ftn-format)
-    message(STATUS "Adding target 'ftn-format'")
-    add_custom_target(
-      ftn-format
-      COMMENT "Formatting Fortran code"
-      COMMAND ${FIND_EXE} src include -name '*.F90' -o -name '*.f90' -o -name '*.for' -exec ${FTN_FORMAT} {} \'\;\'
-      WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-    )
-  endif()
-
-  set(FORMAT_STR "")
-  foreach(TGT ${ALL_FORMAT_TARGETS})
-    set(FORMAT_STR "${FORMAT_STR}
-    COMMAND \$\{CMAKE_COMMAND\} --build . --target ${TGT}
-    ")
+macro(add_format_target)
+  set(OPTIONS)
+  set(SVARGS REGEX NAME)
+  set(MVARGS COMMAND DEPENDS)
+  cmake_parse_arguments(
+    ADD_FORMAT_TARGET "${OPTIONS}" "${SVARGS}" "${MVARGS}" ${ARGN}
+  )
+  set(ADD_FORMAT_TARGET_CREATE_TARGET TRUE)
+  foreach(COND ${ADD_FORMAT_TARGET_DEPENDS})
+    if(NOT EXISTS ${${COND}})
+      set(ADD_FORMAT_TARGET_CREATE_TARGET FALSE)
+      break()
+    endif()
   endforeach()
-  cmake_language(EVAL CODE "
-    add_custom_target(
-      format
-      COMMENT \"Calling all available formatting targets\"
-      WORKING_DIRECTORY \${PROJECT_BINARY_DIR}
-      ${FORMAT_STR}
+
+  if(${ADD_FORMAT_TARGET_CREATE_TARGET})
+    execute_process(
+      COMMAND ${GIT_EXE} ls-files --cached --exclude-standard
+      WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+      OUTPUT_VARIABLE ALL_FILES
+    )
+
+    string(REPLACE "\n" ";" ALL_FILES "${ALL_FILES}")
+    list(FILTER ALL_FILES INCLUDE REGEX "${ADD_FORMAT_TARGET_REGEX}")
+
+    if(EXISTS "${PROJECT_BINARY_DIR}/${ADD_FORMAT_TARGET_NAME}.bash")
+      file(REMOVE "${PROJECT_BINARY_DIR}/${ADD_FORMAT_TARGET_NAME}.bash")
+    endif()
+
+    list(TRANSFORM ALL_FILES PREPEND "${PROJECT_SOURCE_DIR}/")
+    foreach(F ${ALL_FILES})
+      if(NOT EXISTS ${F} OR IS_DIRECTORY ${F})
+        continue()
+      endif()
+      string(REPLACE ";" " " ADD_FORMAT_TARGET_COMMAND
+                     "${ADD_FORMAT_TARGET_COMMAND}"
       )
-  ")
-endif()
+      file(APPEND "${PROJECT_BINARY_DIR}/${ADD_FORMAT_TARGET_NAME}.bash"
+           "${BASH} -c '${ADD_FORMAT_TARGET_COMMAND} ${F}' &
+"
+      )
+    endforeach()
+
+    file(APPEND "${PROJECT_BINARY_DIR}/${ADD_FORMAT_TARGET_NAME}.bash" "wait
+"
+    )
+
+    add_custom_target(
+      ${ADD_FORMAT_TARGET_NAME}
+      COMMAND ${BASH} "${PROJECT_BINARY_DIR}/${ADD_FORMAT_TARGET_NAME}.bash"
+      COMMENT "Running format target '${ADD_FORMAT_TARGET_NAME}'..."
+      WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+    )
+  else()
+    add_custom_target(
+      ${ADD_FORMAT_TARGET_NAME}
+      COMMAND
+        ${CMAKE_COMMAND} -E echo
+        "Target '${ADD_FORMAT_TARGET_NAME}' cannot run because '${ADD_FORMAT_TARGET_DEPENDS}' was false."
+    )
+  endif()
+  add_dependencies(format ${ADD_FORMAT_TARGET_NAME})
+endmacro()
+
+add_format_target(
+  NAME
+  clang-format
+  REGEX
+  "\\.c$|\\.cpp$|\\.cu$|\\.h$|\\.hpp$"
+  COMMAND
+  ${CLANGFORMAT_EXE}
+  -i
+  DEPENDS
+  CLANGFORMAT_EXE
+)
+
+add_format_target(
+  NAME
+  cmake-format
+  REGEX
+  "CMakeLists.txt$|\\.cmake$"
+  COMMAND
+  ${CMAKEFORMAT_EXE}
+  -i
+  DEPENDS
+  CMAKEFORMAT_EXE
+)
+
+add_format_target(
+  NAME
+  ftn-format
+  REGEX
+  "\\.F90$|\\.f90$|\\.for$"
+  COMMAND
+  ${FTN_FORMAT}
+  DEPENDS
+  FTN_FORMAT
+)
+
+add_format_target(
+  NAME
+  py-format
+  REGEX
+  "\\.py$"
+  COMMAND
+  ${PY_FORMAT}
+  DEPENDS
+  PY_FORMAT
+)

@@ -1,4 +1,3 @@
-
 set(HAS_MPI OFF)
 set(HAS_MPIF OFF)
 add_library(mpi-tpl INTERFACE)
@@ -13,5 +12,6 @@ if(MPI_FOUND)
   endif()
 else()
   message(STATUS "No MPI provider could be found. "
-                 "MPI examples will not be built")
+                 "MPI examples will not be built"
+  )
 endif()

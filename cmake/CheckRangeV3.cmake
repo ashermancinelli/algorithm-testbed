@@ -7,5 +7,6 @@ if(TARGET range-v3)
   target_link_libraries(rangev3-tpl INTERFACE range-v3 mpi-tpl warnings)
 else()
   message(STATUS "Could not find range-v3 library. "
-                 "Range v3 examples will not be built.")
+                 "Range v3 examples will not be built."
+  )
 endif()

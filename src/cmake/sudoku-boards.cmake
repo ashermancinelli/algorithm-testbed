@@ -89,22 +89,34 @@ set(BLKSZ 3)
 
 function(idx2 R C RET)
   math(EXPR _RET "(${R} * ${SHAPE}) + ${C}")
-  set(${RET} ${_RET} PARENT_SCOPE)
+  set(${RET}
+      ${_RET}
+      PARENT_SCOPE
+  )
 endfunction()
 
 function(idx3 R C T RET)
   math(EXPR _RET "(((${R} * ${SHAPE}) + ${C}) * ${BLKSZ}) + ${T}")
-  set(${RET} ${_RET} PARENT_SCOPE)
+  set(${RET}
+      ${_RET}
+      PARENT_SCOPE
+  )
 endfunction()
 
 function(tl R RET)
   math(EXPR _RET "${R} - ${R} % ${BLKSZ}")
-  set(${RET} ${_RET} PARENT_SCOPE)
+  set(${RET}
+      ${_RET}
+      PARENT_SCOPE
+  )
 endfunction()
 
 function(blockidx R C RET)
   math(EXPR _RET "(${R} / ${BLKSZ}) * ${BLKSZ} + (${C} / ${BLKSZ})")
-  set(${RET} ${_RET} PARENT_SCOPE)
+  set(${RET}
+      ${_RET}
+      PARENT_SCOPE
+  )
 endfunction()
 
 function(incr_at AR IDX RET)
@@ -112,5 +124,8 @@ function(incr_at AR IDX RET)
   math(EXPR VAL "${VAL}+1")
   list(REMOVE_AT AR ${IDX})
   list(INSERT AR ${IDX} ${VAL})
-  set(${RET} ${AR} PARENT_SCOPE)
+  set(${RET}
+      ${AR}
+      PARENT_SCOPE
+  )
 endfunction()

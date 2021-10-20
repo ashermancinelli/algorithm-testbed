@@ -1,4 +1,3 @@
-
 set(HAS_RAJA OFF)
 set(HAS_RAJA_CUDA OFF)
 find_package(RAJA QUIET)

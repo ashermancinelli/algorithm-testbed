@@ -1,12 +1,20 @@
 add_example(
-  NAME dep-check-cobol
-  SOURCES dep-check.cob
-  DEPENDS HAS_COBOL
-  TYPE COBOL
-  )
+  NAME
+  dep-check-cobol
+  SOURCES
+  dep-check.cob
+  DEPENDS
+  HAS_COBOL
+  TYPE
+  COBOL
+)
 add_example(
-  NAME lc-peak-element-cobol
-  SOURCES lc-peak-element.cob
-  DEPENDS HAS_COBOL
-  TYPE COBOL
-  )
+  NAME
+  lc-peak-element-cobol
+  SOURCES
+  lc-peak-element.cob
+  DEPENDS
+  HAS_COBOL
+  TYPE
+  COBOL
+)

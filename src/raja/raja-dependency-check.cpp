@@ -1,5 +1,5 @@
-#include <iostream>
 #include "raja-config.hpp"
+#include <iostream>
 
 int main(int, char **) {
 

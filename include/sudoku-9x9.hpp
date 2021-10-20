@@ -23,7 +23,7 @@ const auto idx3 = [] HOST_DEVICE_ATTRS(int r, int c, int t) {
 };
 const auto tl = [] HOST_DEVICE_ATTRS(const int r) { return r - r % blksz; };
 const auto max = [](int a, int b) { return std::max(a, b); };
-const auto bi = [] (int r, int c) { return (r / blksz) * blksz + (c / blksz); };
+const auto bi = [](int r, int c) { return (r / blksz) * blksz + (c / blksz); };
 
 // clang-format off
 

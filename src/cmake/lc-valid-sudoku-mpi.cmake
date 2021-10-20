@@ -89,22 +89,34 @@ set(BLKSZ 3)
 
 function(idx2 R C RET)
   math(EXPR _RET "(${R} * ${SHAPE}) + ${C}")
-  set(${RET} ${_RET} PARENT_SCOPE)
+  set(${RET}
+      ${_RET}
+      PARENT_SCOPE
+  )
 endfunction()
 
 function(idx3 R C T RET)
   math(EXPR _RET "(((${R} * ${SHAPE}) + ${C}) * ${BLKSZ}) + ${T}")
-  set(${RET} ${_RET} PARENT_SCOPE)
+  set(${RET}
+      ${_RET}
+      PARENT_SCOPE
+  )
 endfunction()
 
 function(tl R RET)
   math(EXPR _RET "${R} - ${R} % ${BLKSZ}")
-  set(${RET} ${_RET} PARENT_SCOPE)
+  set(${RET}
+      ${_RET}
+      PARENT_SCOPE
+  )
 endfunction()
 
 function(blockidx R C RET)
   math(EXPR _RET "(${R} / ${BLKSZ}) * ${BLKSZ} + (${C} / ${BLKSZ})")
-  set(${RET} ${_RET} PARENT_SCOPE)
+  set(${RET}
+      ${_RET}
+      PARENT_SCOPE
+  )
 endfunction()
 
 function(incr_at AR IDX RET)
@@ -112,16 +124,19 @@ function(incr_at AR IDX RET)
   math(EXPR VAL "${VAL}+1")
   list(REMOVE_AT AR ${IDX})
   list(INSERT AR ${IDX} ${VAL})
-  set(${RET} ${AR} PARENT_SCOPE)
+  set(${RET}
+      ${AR}
+      PARENT_SCOPE
+  )
 endfunction()
 
 function(isgood)
-  set(OPTS )
+  set(OPTS)
   set(SVARGS BOARD RANK)
-  set(MVARGS )
+  set(MVARGS)
   cmake_parse_arguments(ISGOOD "${OPTS}" "${SVARGS}" "${MVARGS}" ${ARGN})
   set(BOARD ${${ISGOOD_BOARD}})
-  set(AR )
+  set(AR)
   math(EXPR ARSZ "${SHAPE}*${SHAPE}*3")
   foreach(I RANGE ${ARSZ})
     list(APPEND AR 0)
@@ -155,7 +170,9 @@ function(isgood)
   endif()
 endfunction()
 
-file(WRITE getrank.c "
+file(
+  WRITE getrank.c
+  "
 #include <mpi.h>
 #include <stdio.h>
 int main(int argc, char** argv) {
@@ -166,7 +183,8 @@ int main(int argc, char** argv) {
   printf(\"%d\\n\",rank);
   return rank;
 }
-")
+"
+)
 
 find_program(MPICC mpicc)
 find_program(MPIRUN mpirun)
@@ -174,14 +192,9 @@ if("${MPICC}" STREQUAL "MPICC-NOTFOUND")
   message(FATAL_ERROR "Could not find MPI C compiler.")
 endif()
 
-execute_process(
-  COMMAND ${MPICC} getrank.c -o getrank
-  )
+execute_process(COMMAND ${MPICC} getrank.c -o getrank)
 
-execute_process(
-  COMMAND ./getrank
-  RESULT_VARIABLE RANK
-  )
+execute_process(COMMAND ./getrank RESULT_VARIABLE RANK)
 
 message(STATUS "Rank = ${RANK}")
 foreach(BOARD GOOD_ONLINE GOOD BAD_ONLINE BADB)

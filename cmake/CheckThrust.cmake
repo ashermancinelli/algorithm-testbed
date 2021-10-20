@@ -1,4 +1,3 @@
-
 # Keeping these variables separate in case we want to break this into multiple
 # variables for rocthrust, thrust with omp, tbb, or whatever
 set(HAS_THRUST OFF)

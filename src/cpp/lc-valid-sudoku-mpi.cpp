@@ -48,7 +48,8 @@ auto isgood(const Board &board, int rank, int size) -> bool {
   }
 
   vector<int> gar(shape * shape * 3, 0);
-  MPI_Reduce(ar.data(), gar.data(), gar.size(), MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(ar.data(), gar.data(), gar.size(), MPI_INT, MPI_SUM, 0,
+             MPI_COMM_WORLD);
   return 0 == rank ? std::accumulate(gar.begin(), gar.end(), -1, sb::max) < 2
                    : false;
 }

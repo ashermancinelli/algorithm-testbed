@@ -67,7 +67,7 @@ int main(int argc, char **argv) {
     }
   }
 
-  for (const auto& ans : answers)
+  for (const auto &ans : answers)
     print_answer(ans);
 
   Kokkos::finalize();

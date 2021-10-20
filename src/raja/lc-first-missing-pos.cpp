@@ -14,11 +14,11 @@ FirstMissing ⇐ { 𝕊𝕩:
       {0=+´diff}◶{
         1+˜⊑𝕩
       }‿{
-        # If the input is the iota, use the len of the positive input
+#If the input is the iota, use the len of the positive input
         1+≠in
       } out
     }‿{
-      # If the first sorted element >1, use 1
+#If the first sorted element> 1, use 1
       1
     } @
   }‿{
@@ -97,7 +97,7 @@ int main(int argc, char **argv) {
 
     // If there is no difference, it's just the next natural number, or N+1
     if (0 == diffsum.get()) {
-      answers.push_back(N+1);
+      answers.push_back(N + 1);
       continue;
     }
 
@@ -108,10 +108,10 @@ int main(int argc, char **argv) {
 
     forall<exec_space>(
         RangeSegment(0, N),
-        LAMBDA(const int i) { mindiff.min(diff[i] == 0 ? inf : arr[i-1]); });
+        LAMBDA(const int i) { mindiff.min(diff[i] == 0 ? inf : arr[i - 1]); });
 
     // One less than the first number different from the iota
-    answers.push_back(mindiff.get()+1);
+    answers.push_back(mindiff.get() + 1);
 
     alloc.deallocate(diff);
     alloc.deallocate(arr);

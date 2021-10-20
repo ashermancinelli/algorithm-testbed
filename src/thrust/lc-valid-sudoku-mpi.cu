@@ -12,8 +12,8 @@
 using sudoku_boards::Board;
 using sudoku_boards::shape;
 
-using thrust::device_malloc;
 using thrust::device_free;
+using thrust::device_malloc;
 using thrust::device_vector;
 using thrust::host_vector;
 using thrust::raw_pointer_cast;
@@ -63,7 +63,9 @@ auto isgood(const Board &board, int rank, int size) -> bool {
   auto gar = host_vector<int>(81 * 3, 0);
   MPI_Reduce(h_ar.data(), gar.data(), gar.size(), MPI_INT, MPI_SUM, 0,
              MPI_COMM_WORLD);
-  device_free(rows); device_free(cols); device_free(d_ar);
+  device_free(rows);
+  device_free(cols);
+  device_free(d_ar);
   if (rank > 0)
     return false;
   const auto m = thrust::reduce(thrust::host, gar.begin(), gar.end(), -1,

@@ -72,9 +72,8 @@ int main(int argc, char **argv) {
   }
 
   std::cout << "⟨ ";
-  std::copy(
-      answers.begin(), answers.end(),
-      std::ostream_iterator<int>(std::cout, " "));
+  std::copy(answers.begin(), answers.end(),
+            std::ostream_iterator<int>(std::cout, " "));
   std::cout << "⟩\n";
 
   alloc.deallocate(arr);

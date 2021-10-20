@@ -1,4 +1,3 @@
-
 set(HAS_KOKKOS OFF)
 set(HAS_KOKKOS_CUDA OFF)
 find_package(Kokkos QUIET)

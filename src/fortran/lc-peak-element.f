@@ -1,5 +1,5 @@
 
-c     Comments require a 'c' in the first column
+c     Comments require a 'c'in the first column
       program main
-        print *, 'running'
+         print *, 'running'
       end program

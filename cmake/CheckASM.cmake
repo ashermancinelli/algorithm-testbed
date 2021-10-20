@@ -7,5 +7,6 @@ if(CMAKE_ASM_COMPILER)
   message(STATUS "Found ASM compiler: ${CMAKE_ASM_COMPILER}")
 else()
   message(STATUS "Could not find ASM compiler. "
-    "Assembly examples will not be built.")
+                 "Assembly examples will not be built."
+  )
 endif()

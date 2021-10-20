@@ -1,14 +1,14 @@
 #include "sudoku-9x9.hpp"
 #include <thrust-config.hpp>
-#include <thrust/extrema.h>
 #include <thrust/device_free.h>
 #include <thrust/device_malloc.h>
+#include <thrust/extrema.h>
 
 using sudoku_boards::Board;
 using sudoku_boards::shape;
 
-using thrust::device_malloc;
 using thrust::device_free;
+using thrust::device_malloc;
 using thrust::device_vector;
 using thrust::host_vector;
 using thrust::raw_pointer_cast;
@@ -35,10 +35,13 @@ __global__ void setar(int *ar, const int *board) {
 // https://leetcode.com/problems/valid-sudoku/discuss/1487300/C%2B%2B-EASY-TO-UNDERSTAND
 auto isgood(const Board &board) -> bool {
   auto d_ar = device_malloc<int>(81 * 3);
-  setar<<<1, dim3(9, 9)>>>(raw_pointer_cast(d_ar), 
-      raw_pointer_cast((thrust::device_vector<int>(board.begin(), board.end())).data()));
+  setar<<<1, dim3(9, 9)>>>(
+      raw_pointer_cast(d_ar),
+      raw_pointer_cast(
+          (thrust::device_vector<int>(board.begin(), board.end())).data()));
   cudaDeviceSynchronize();
-  const auto m = thrust::reduce(d_ar, d_ar+(81*3), -1, thrust::maximum<int>());
+  const auto m =
+      thrust::reduce(d_ar, d_ar + (81 * 3), -1, thrust::maximum<int>());
   device_free(d_ar);
   return m < 2;
 }
