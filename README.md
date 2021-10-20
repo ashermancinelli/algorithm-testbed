@@ -4,6 +4,7 @@ Implementations of programming problems, usually leveraging GPUs or distributed 
 * [See the `doc` directory for more.](./doc/README.md)
 * [See CHANGELOG for version information and history.](./CHANGELOG.md)
 * [See CONTRIBUTING for information on contributing and developing.](./CONTRIBUTING.md)
+* [See LICENSE for information on intellectual property.](./LICENSE)
 
 ## Installation
 
