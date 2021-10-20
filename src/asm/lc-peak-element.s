@@ -1,15 +1,19 @@
-  .global solve
+
+  .globl solve
+
   .text
 
+; eax: unsigned int nums[]
+; ebx: unsigned int count
 solve:
-  mov $0, %r8
-  mov $0, %rax
-max:
-  mov %rdi, %rax
-  ret
+  mov %ebp, %esp      ; save stack pointer
+  mov %ecx, %ebx 
+  mov %eax, 0
+add:
+  incr %eax
+  loop add
+
+  ret 4
 
 done:
   ret
-
-  .data
-it: .quad 0
