@@ -15,19 +15,33 @@ We have to find the peak element that is greater than both neighbors.
 
 ## Content
 
-1. [Lisp](#lisp-(scheme))
-1. [APL](#apl-(bqn))
-1. [BASIC](#basic-(freebasic))
-1. [Assembler](#assembler-(x86))
-1. [ALGOL](#algol-(algol68-genie))
-1. [COBOL](#cobol-(gnu-cobol))
-1. [Fortran](#fortran-(f77))
+1. [Lisp](#lisp)
+1. [APL](#apl)
+1. [BASIC](#basic)
+1. [Assembler](#assembler)
+1. [ALGOL](#algol)
+1. [COBOL](#cobol)
+1. [Fortran](#fortran)
 
-### [Lisp (Scheme)](#content)
-### [APL (BQN)](#content)
-### [BASIC (FreeBASIC)](#content)
-### [Assembler (x86)](#content)
-### [ALGOL (Algol68 Genie)](#content)
+### [Lisp](#content)
+
+I used Scheme for my Lisp.
+
+### [APL](#content)
+
+I used the BQN language as my APL of choice.
+
+### [BASIC](#content)
+
+I used FreeBASIC for this example.
+
+### [Assembler](#content)
+
+I wrote this in x86 64-bit assembly on linux with a GNU compiler.
+
+### [ALGOL](#content)
+
+I'm using the Algol68 Genie compiler-interpreter for this code.
 
 ```algol
 PROC solve = ([]INT elements)INT: (
@@ -43,5 +57,10 @@ PROC solve = ([]INT elements)INT: (
 );
 ```
 
-### [COBOL (GNU Cobol)](#content)
-### [Fortran (F77)](#content)
+### [COBOL](#content)
+
+I use the GNUCobol compiler for this example.
+
+### [Fortran](#content)
+
+I used the GNU gfortran compiler in fixed-form mode for this.
