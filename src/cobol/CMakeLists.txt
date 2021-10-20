@@ -4,3 +4,9 @@ add_example(
   DEPENDS HAS_COBOL
   TYPE COBOL
   )
+add_example(
+  NAME lc-peak-element-cobol
+  SOURCES lc-peak-element.cob
+  DEPENDS HAS_COBOL
+  TYPE COBOL
+  )

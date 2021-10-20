@@ -2,7 +2,7 @@
   .text
 
 solve:
-  mov 0, %edx
+  mov $0, %rax
   ret
 
 done:

@@ -14,3 +14,9 @@ add_example(
   SOURCES lc-peak-element.c lc-peak-element.s
   DEPENDS HAS_ASM
 )
+add_example(
+  NAME "factorial-asm"
+  TYPE ASM
+  SOURCES fac.c fac.s
+  DEPENDS HAS_ASM
+)

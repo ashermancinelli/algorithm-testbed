@@ -8,3 +8,4 @@
               DISPLAY 'Cobol compiler is working'.
             *> end our program
             STOP RUN.
+
