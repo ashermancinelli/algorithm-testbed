@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Cleaned up the example infrastructure to better support custom targets like ASM and COBOL
 - Applied formatters now that formatting targets are working
+- Updated readme
 
 ## [v0.2.2] 10-18-2021
 
