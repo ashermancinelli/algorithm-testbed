@@ -1,3 +1,5 @@
+set(CMAKE_COBOL_FLAGS "-Wall -Wextra -Wno-dialect" CACHE STRING "Extra flags passed to COBOL compiler")
+
 macro(add_cobol_example)
   set(OPTIONS)
   set(SVARGS NAME)
@@ -27,6 +29,7 @@ macro(add_cobol_example)
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${ADD_COBOL_EXAMPLE_NAME}
     DEPENDS ${ADD_COBOL_EXAMPLE_SOURCES}
     COMMAND ${COBC_EXE} -x ${ADD_COBOL_EXAMPLE_SOURCES} -o
-            ${CMAKE_CURRENT_BINARY_DIR}/${ADD_COBOL_EXAMPLE_NAME}
+    ${CMAKE_CURRENT_BINARY_DIR}/${ADD_COBOL_EXAMPLE_NAME}
+    -Wall -Wextra -Wno-dialect
   )
 endmacro()
