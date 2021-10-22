@@ -1,5 +1,3 @@
-set(CMAKE_COBOL_FLAGS "-Wall -Wextra -Wno-dialect" CACHE STRING "Extra flags passed to COBOL compiler")
-
 macro(add_cobol_example)
   set(OPTIONS)
   set(SVARGS NAME)
