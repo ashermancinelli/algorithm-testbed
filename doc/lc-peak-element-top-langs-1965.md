@@ -39,7 +39,7 @@ F ← ({0∾((2-˜≠𝕩)⥊1)∾0}∧(«<⊢)∧(⊢>»))⊐(1˙)
 F ¨ i0‿i1‿i2
 ```
 
-![Diagram of my BQN solution](./doc/img/bqn.png)
+![Diagram of my BQN solution](./img/lc-peak-element/bqn.png)
 
 ### [BASIC](#content)
 
