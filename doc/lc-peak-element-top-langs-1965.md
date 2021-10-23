@@ -45,7 +45,11 @@ Ken Iverson moved on from IPSharp in 1990 to JSoftware to write the J programmin
 
 I used the BQN language as my APL of choice, as it's very actively developed and I believe in the developers behind the project.
 
-APL solution:
+APL is the only language where I opted for a newer implementation instead of finding the oldest one possible.
+
+Marshall Lochbaum began designing BQN in collaboration with his colleagues at Dyalog before taking it on as a personal project in 2020[[ref](#ref-bqn-hist)].
+
+Here's my BQN solution:
 ```
 i0 ← 1‿2‿3‿1
 i1 ← 1‿2‿1‿3‿5‿6‿4
@@ -59,6 +63,10 @@ F ¨ i0‿i1‿i2
 </center>
 
 ### [Lisp](#content)
+
+The 5th most popular programming language in 1965 was Lisp.
+
+Lisp was invented by John McCarthy in 1958 at MIT with his paper *Recursive Functions of Symbolic Expressions and Their Computation by Machine, Part I*, paralleling Ken Iverson's paper *A Programming Language*.[[ref](#ref-hist-scheme)].
 
 I used MIT Scheme for my Lisp since it seems like the oldest lisp implementation that I can still install.
 
@@ -251,11 +259,13 @@ The name "Fortran" is derived from [FORmula TRANslation](#ref-ftn-start).
 
 ## References
 
-* <a name="ref-ftn-start">[Fortran history](https://en.wikipedia.org/wiki/Fortran#History)</a>
-* <a name="ref-pop-langs">[Most Popular Programming Languages](https://statisticsanddata.org/most-popular-programming-languages/)</a>
-* <a name="ref-hist-apl-computer-history">[The Apl Programming Language Source Code](https://computerhistory.org/blog/the-apl-programming-language-source-code/)</a>
+* <a name="ref-ftn-start" href="https://en.wikipedia.org/wiki/Fortran#History">Fortran history</a>
+* <a name="ref-pop-langs" href="https://statisticsanddata.org/most-popular-programming-languages/">Most Popular Programming Languages</a>
+* <a name="ref-hist-apl-computer-history" href="https://computerhistory.org/blog/the-apl-programming-language-source-code/">The Apl Programming Language Source Code</a>
 * <a name="ref-wiki-iverson">[Kenneth Iverson Wikipedia](https://en.wikipedia.org/wiki/Kenneth_E._Iverson)</a>
-<a name="ref-ntot"></a>[*Notation as a Tool of Thought*, Ken Iverson](https://www.jsoftware.com/papers/tot.htm)
-* <a name="ref-hist-dyalog">[History of Dyalog](https://www.dyalog.com/uploads/files/apl50/Dyalog%20APL%20A%20Personal%20History.pdf)</a>
+* <a name="ref-ntot" href="https://www.jsoftware.com/papers/tot.htm">*Notation as a Tool of Thought*, Ken Iverson</a>
+* <a name="ref-hist-dyalog" href="https://www.dyalog.com/uploads/files/apl50/Dyalog%20APL%20A%20Personal%20History.pdf">History of Dyalog</a>
 * <a name="ref-gnuapl-stallman" href="https://en.wikipedia.org/wiki/APL_(programming_language)#GNU_APL">GNU APL</a></a>
-* <a name="ref-pnnl"><a href="https://www.pnnl.gov/">Pacific Northwest National Laboratory</a></a>
+* <a name="ref-pnnl" href="https://www.pnnl.gov/">Pacific Northwest National Laboratory</a>
+* <a name="ref-bqn-hist" href="https://mlochbaum.github.io/BQN/commentary/history.html">BQN's Development History</a>
+* <a name="ref-hist-scheme" href="https://en.wikipedia.org/wiki/History_of_the_Scheme_programming_language">History of the Scheme Programming Language</a>
