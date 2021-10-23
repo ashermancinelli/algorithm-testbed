@@ -1,4 +1,5 @@
 include(cmake/AddAsmExample.cmake)
+include(cmake/AddFreeBASICExample.cmake)
 include(cmake/AddSchemeExample.cmake)
 include(cmake/AddCOBOLExample.cmake)
 
@@ -29,6 +30,10 @@ macro(add_special_example)
     )
   elseif("${ADD_SPECIAL_EXAMPLE_TYPE}" STREQUAL "SCHEME")
     add_scheme_example(
+      NAME ${ADD_SPECIAL_EXAMPLE_NAME} SOURCES ${ADD_SPECIAL_EXAMPLE_SOURCES}
+    )
+  elseif("${ADD_SPECIAL_EXAMPLE_TYPE}" STREQUAL "FREEBASIC")
+    add_freebasic_example(
       NAME ${ADD_SPECIAL_EXAMPLE_NAME} SOURCES ${ADD_SPECIAL_EXAMPLE_SOURCES}
     )
   elseif("${ADD_SPECIAL_EXAMPLE_TYPE}" STREQUAL "COBOL")
