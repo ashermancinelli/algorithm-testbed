@@ -5,14 +5,12 @@
 ;F ¨ i0‿i1‿i2
 
 (define shl
-  (lambda (l)
-    (reverse (cons -1 (reverse (cdr l))))
-    ))
+  (lambda (v l)
+    (reverse (cons v (reverse (cdr l))))))
 
 (define shr
-  (lambda (l)
-    (cons -1 (reverse (cdr (reverse l))))
-    ))
+  (lambda (v l)
+    (cons v (reverse (cdr (reverse l))))))
 
 (define solve
   (lambda (input)
@@ -23,10 +21,9 @@
               (map >
                    input
                    (map max
-                        (shl input)
-                        (shr input)))
-              (iota (length input)))))
-  ))
+                        (shl -99999 input)
+                        (shr -99999 input)))
+              (iota (length input)))))))
 
 (for-each
   (lambda (l)

@@ -13,9 +13,13 @@
          i1(6) = 6
          i1(7) = 4
 
-         function solve(prob() as Integer) as Integer
-             for i as integer = lbound(prob)+1 to ubound(prob)-1
-                 if (prob(i)>prob(i+1) and prob(i)>prob(i-1)) then solve=i-1
+         function solve(prob() as integer) as integer
+             dim vals(1 to ubound(prob)+2) as integer
+             vals(1) = -9999999
+             vals(ubound(prob)+1) = -9999999
+             for i as integer = 1 to ubound(prob)
+                 vals(i) = prob(i)
+                 if (vals(i)>vals(i+1) and vals(i)>vals(i-1)) then solve=i-1
              next
          end function
 
