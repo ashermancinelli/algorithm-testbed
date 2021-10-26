@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Fixed answers for lc peak element after discord pointed out my prev answers were off
 - Cleaned up the example infrastructure to better support custom targets like ASM and COBOL
 - Applied formatters now that formatting targets are working
 - Updated readme
